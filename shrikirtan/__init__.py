@@ -32,6 +32,12 @@ def create_app():
     db_url = os.environ.get('DATABASE_URL', '')
     if db_url.startswith('postgres://'):          # SQLAlchemy requires postgresql://
         db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    if db_url.startswith('sqlite://'):
+        # Ensure the directory exists (e.g. /data on Fly.io volume)
+        import re as _re
+        m = _re.match(r'sqlite:////(.+)', db_url)
+        if m:
+            os.makedirs(os.path.dirname('/' + m.group(1)), exist_ok=True)
     app.config['SQLALCHEMY_DATABASE_URI'] = (
         db_url or f"sqlite:///{os.path.join(app.instance_path, 'shrikirtan.db')}"
     )
