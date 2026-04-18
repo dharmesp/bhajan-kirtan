@@ -4,10 +4,11 @@ primary_region = 'lax'   # Los Angeles — closest to Irvine, CA
 
 [build]
 
-# Persistent volume: SQLite DB lives at /data on the machine
+# Persistent volume: SQLite DB lives at /data on the machine (10 GB)
 [[mounts]]
   source      = 'shrikirtan_data'
   destination = '/data'
+  initial_size = '10gb'
 
 [env]
   # Point Flask to the persistent volume path
