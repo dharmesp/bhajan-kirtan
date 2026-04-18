@@ -171,10 +171,12 @@
   }
 
   async function doSearch(q) {
-    if (!q) { showStatic(); return; }
+    // Show static list only when both query and category are absent
+    if (!q && !activeCat) { showStatic(); return; }
 
     statusEl.textContent = 'Searching…';
-    const params = new URLSearchParams({ q });
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
     if (activeCat) params.set('cat', activeCat);
 
     try {
@@ -184,11 +186,12 @@
       resultsEl.innerHTML = '';
       if (data.length === 0) {
         noResultsEl.style.display = '';
-        statusEl.textContent = 'No results for "' + q + '"';
+        statusEl.textContent = q ? 'No results for "' + q + '"' : 'No bhajans in this category.';
       } else {
         noResultsEl.style.display = 'none';
         data.forEach(item => resultsEl.appendChild(buildRow(item, q)));
-        statusEl.textContent = data.length + ' result' + (data.length === 1 ? '' : 's') + ' for "' + q + '"';
+        statusEl.textContent = data.length + ' bhajan' + (data.length === 1 ? '' : 's')
+          + (q ? ' for "' + q + '"' : ' in this category');
       }
       staticList.style.display = 'none';
       searchList.style.display = '';
@@ -227,7 +230,8 @@
       this.classList.remove('btn-outline-primary');
       activeCat = this.dataset.cat;
       const q = searchInput.value.trim();
-      if (q) doSearch(q);
+      // Always trigger a search/filter when category changes
+      doSearch(q);
     });
   });
 })();

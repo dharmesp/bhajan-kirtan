@@ -28,17 +28,20 @@ def index():
 def search_bhajans():
     q = request.args.get('q', '').strip()
     cat_id = request.args.get('cat', '', type=str)
-    if not q:
+
+    # Return empty only when both q and cat are absent
+    if not q and not cat_id:
         return jsonify([])
 
-    query = Bhajan.query.filter(
-        Bhajan.is_active == True,
-        Bhajan.title_english.ilike(f'%{q}%')
-    )
+    query = Bhajan.query.filter(Bhajan.is_active == True)
+
+    if q:
+        query = query.filter(Bhajan.title_english.ilike(f'%{q}%'))
+
     if cat_id and cat_id.isdigit():
         query = query.filter(Bhajan.category_id == int(cat_id))
 
-    results = query.order_by(Bhajan.display_order, Bhajan.id).limit(100).all()
+    results = query.order_by(Bhajan.display_order, Bhajan.id).limit(200).all()
     return jsonify([{
         'title_gujarati': b.title_gujarati,
         'title_english':  b.title_english,
