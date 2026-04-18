@@ -60,6 +60,23 @@ def view_bhajan(slug):
     return render_template('bhajan.html', bhajan=bhajan, bhajans=bhajans)
 
 
+@public_bp.route('/qrcode.png')
+def home_qrcode():
+    domain = Setting.get('domain_name', '').rstrip('/')
+    if not domain:
+        domain = request.host_url.rstrip('/')
+
+    qr = qrcode.QRCode(box_size=8, border=2)
+    qr.add_data(domain)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color='#92400e', back_color='white')
+
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return send_file(buf, mimetype='image/png', max_age=3600)
+
+
 @public_bp.route('/bhajan/<slug>/qrcode.png')
 def bhajan_qrcode(slug):
     bhajan = Bhajan.query.filter_by(slug=slug, is_active=True).first_or_404()

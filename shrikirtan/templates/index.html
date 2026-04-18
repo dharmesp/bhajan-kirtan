@@ -117,6 +117,16 @@
     </div>
   </div>
 
+  <!-- ── Homepage QR Code ──────────────────────────────────── -->
+  <div class="text-center mt-5 pt-3 border-top">
+    <p class="text-muted small mb-2">Scan to open on another device</p>
+    <img src="{{ url_for('public.home_qrcode') }}"
+         alt="QR code for {{ app_title }}"
+         class="img-fluid rounded shadow-sm"
+         style="width:160px; height:160px;" />
+    <p class="text-muted small mt-2 mb-0">🙏 {{ app_title }}</p>
+  </div>
+
 </div>
 {% endblock %}
 
