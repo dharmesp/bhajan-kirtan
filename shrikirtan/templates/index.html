@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}{{ app_title }} — Home{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Hero -->
+  <div class="text-center mb-4">
+    <h1 class="sk-hero-title mb-1">{{ app_title }}</h1>
+    <p class="text-muted">ભજન / કીર્તન — Select a Bhajan or Kirtan</p>
+  </div>
+
+  <!-- Category filter chips -->
+  {% if categories %}
+  <div class="d-flex flex-wrap gap-2 justify-content-center mb-3"
+       id="catFilters" role="group" aria-label="Filter by category">
+    <button class="btn btn-sm btn-primary cat-filter active" data-cat="">All</button>
+    {% for cat in categories %}
+    <button class="btn btn-sm btn-outline-primary cat-filter"
+            data-cat="{{ cat.id }}">{{ cat.name }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Search bar -->
+  <div class="input-group mb-1">
+    <span class="input-group-text bg-transparent border-end-0">
+      <i class="bi bi-search text-muted"></i>
+    </span>
+    <input type="text" class="form-control border-start-0 ps-0" id="bhajanSearch"
+           placeholder="Type to search by English name…"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    <button class="btn btn-outline-secondary" id="clearSearch" type="button"
+            style="display:none;" aria-label="Clear search">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+  <div id="searchStatus" class="text-muted small ps-1 mb-2" style="min-height:1.2em;"></div>
+
+  <!-- ── Bhajan list ──────────────────────────────────────────── -->
+
+  <!-- Static paginated list (shown when not searching) -->
+  <div id="staticList">
+    {% if bhajans %}
+    <div class="sk-list rounded border overflow-hidden">
+      {% for bhajan in bhajans %}
+      <a href="{{ url_for('public.view_bhajan', slug=bhajan.slug) }}"
+         class="sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2">
+        <span class="sk-row-num text-muted flex-shrink-0">
+          {{ (pagination.page - 1) * pagination.per_page + loop.index }}
+        </span>
+        <span class="flex-grow-1 overflow-hidden">
+          <span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">{{ bhajan.title_gujarati }}</span>
+          <span class="text-muted small d-block text-truncate sk-row-en">{{ bhajan.title_english }}</span>
+        </span>
+        {% if bhajan.category %}
+        <span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">
+          {{ bhajan.category.name }}
+        </span>
+        {% endif %}
+        <i class="bi bi-chevron-right text-muted flex-shrink-0"></i>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <nav class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2"
+         aria-label="Page navigation">
+      <small class="text-muted">
+        Showing {{ (pagination.page-1)*pagination.per_page+1 }}–{{ [(pagination.page)*pagination.per_page, pagination.total] | min }}
+        of {{ pagination.total }} bhajans
+      </small>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="?page={{ pagination.prev_num }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          <a class="page-link" href="?page={{ pagination.next_num }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    {% else %}
+    <small class="text-muted d-block mt-2 ps-1">{{ pagination.total }} bhajan{{ 's' if pagination.total != 1 }}</small>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-music-note-list fs-1 d-block mb-3 opacity-25"></i>
+      <p class="mb-3">No bhajans added yet.</p>
+      <a href="{{ url_for('admin.login') }}" class="btn btn-primary">
+        <i class="bi bi-gear me-1"></i>Admin Login
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Search results list (replaces staticList while searching) -->
+  <div id="searchList" style="display:none;">
+    <div class="sk-list rounded border overflow-hidden" id="searchResults"></div>
+    <div id="noResults" class="text-center text-muted py-5" style="display:none;">
+      <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+      <p class="mb-0">No bhajans found.</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const searchInput = document.getElementById('bhajanSearch');
+  const clearBtn    = document.getElementById('clearSearch');
+  const statusEl    = document.getElementById('searchStatus');
+  const staticList  = document.getElementById('staticList');
+  const searchList  = document.getElementById('searchList');
+  const resultsEl   = document.getElementById('searchResults');
+  const noResultsEl = document.getElementById('noResults');
+
+  let activeCat = '';
+  let debounce  = null;
+
+  function escapeRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function highlight(text, q) {
+    if (!q) return text;
+    const re = new RegExp('(' + escapeRe(q) + ')', 'gi');
+    return text.replace(re, '<mark class="sk-highlight">$1</mark>');
+  }
+
+  function buildRow(item, q) {
+    const a = document.createElement('a');
+    a.href = item.url;
+    a.className = 'sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2';
+    a.innerHTML =
+      '<span class="flex-grow-1 overflow-hidden">' +
+        '<span class="gujarati-text fw-semibold d-block text-truncate">' + item.title_gujarati + '</span>' +
+        '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
+      '</span>' +
+      (item.category
+        ? '<span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">' + item.category + '</span>'
+        : '') +
+      '<i class="bi bi-chevron-right text-muted flex-shrink-0"></i>';
+    return a;
+  }
+
+  async function doSearch(q) {
+    if (!q) { showStatic(); return; }
+
+    statusEl.textContent = 'Searching…';
+    const params = new URLSearchParams({ q });
+    if (activeCat) params.set('cat', activeCat);
+
+    try {
+      const resp = await fetch('/api/search?' + params.toString());
+      const data = await resp.json();
+
+      resultsEl.innerHTML = '';
+      if (data.length === 0) {
+        noResultsEl.style.display = '';
+        statusEl.textContent = 'No results for "' + q + '"';
+      } else {
+        noResultsEl.style.display = 'none';
+        data.forEach(item => resultsEl.appendChild(buildRow(item, q)));
+        statusEl.textContent = data.length + ' result' + (data.length === 1 ? '' : 's') + ' for "' + q + '"';
+      }
+      staticList.style.display = 'none';
+      searchList.style.display = '';
+    } catch (_) {
+      statusEl.textContent = 'Search failed. Please try again.';
+    }
+  }
+
+  function showStatic() {
+    searchList.style.display = 'none';
+    staticList.style.display = '';
+    statusEl.textContent = '';
+    clearBtn.style.display = 'none';
+  }
+
+  searchInput.addEventListener('input', function () {
+    const q = this.value.trim();
+    clearBtn.style.display = q ? '' : 'none';
+    clearTimeout(debounce);
+    debounce = setTimeout(() => doSearch(q), 280);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    showStatic();
+    searchInput.focus();
+  });
+
+  document.querySelectorAll('.cat-filter').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.cat-filter').forEach(b => {
+        b.classList.remove('active', 'btn-primary');
+        b.classList.add('btn-outline-primary');
+      });
+      this.classList.add('active', 'btn-primary');
+      this.classList.remove('btn-outline-primary');
+      activeCat = this.dataset.cat;
+      const q = searchInput.value.trim();
+      if (q) doSearch(q);
+    });
+  });
+})();
+</script>
+{% endblock %}

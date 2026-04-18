@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}{{ bhajan.title_english }} — {{ app_title }}{% endblock %}
+
+{% block content %}
+
+<!-- ── Sticky controls bar ────────────────────────────────────── -->
+<div class="sk-controls sticky-top border-bottom" id="controlsBar">
+  <div class="container-fluid px-2 py-2">
+
+    <!-- Row 1: back + dropdown -->
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <a href="{{ url_for('public.index') }}" class="btn btn-sm btn-outline-secondary flex-shrink-0" aria-label="Back to list">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <select class="form-select form-select-sm" id="bhajanDropdown" aria-label="Switch bhajan">
+        {% for b in bhajans %}
+        <option value="{{ url_for('public.view_bhajan', slug=b.slug) }}"
+                {% if b.id == bhajan.id %}selected{% endif %}>
+          {{ b.title_gujarati }} — {{ b.title_english }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Row 2: view mode + font size -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+
+      <!-- View toggle -->
+      <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="View mode">
+        <input type="radio" class="btn-check" name="viewMode" id="vBoth" value="both" />
+        <label class="btn btn-outline-primary" for="vBoth"><i class="bi bi-columns-gap me-1"></i>Both</label>
+
+        <input type="radio" class="btn-check" name="viewMode" id="vGu" value="gu" />
+        <label class="btn btn-outline-primary" for="vGu">ગુ</label>
+
+        <input type="radio" class="btn-check" name="viewMode" id="vEn" value="en" />
+        <label class="btn btn-outline-primary" for="vEn">EN</label>
+      </div>
+
+      <!-- Font size -->
+      <div class="d-flex gap-1 flex-shrink-0 ms-auto">
+        <button class="btn btn-sm btn-outline-secondary" id="fontMinus" title="Smaller text" aria-label="Decrease font size">
+          <span style="font-size:.75rem;">A</span>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" id="fontPlus" title="Larger text" aria-label="Increase font size">
+          <span style="font-size:1rem;font-weight:700;">A</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Main bhajan content ────────────────────────────────────── -->
+<div class="container py-3" id="bhajanContent">
+
+  <!-- Title block -->
+  <div class="text-center mb-4">
+    {% if bhajan.category %}
+    <span class="badge bg-primary rounded-pill mb-2">{{ bhajan.category.name }}</span>
+    {% endif %}
+    <h1 class="gujarati-text fw-bold sk-bhajan-title" id="titleGu">{{ bhajan.title_gujarati }}</h1>
+    <h2 class="sk-bhajan-subtitle text-muted" id="titleEn">{{ bhajan.title_english }}</h2>
+  </div>
+
+  <!-- Gujarati section -->
+  <div id="sectionGu" class="sk-section mb-4">
+    <div class="sk-section-label text-uppercase small fw-semibold text-muted mb-2">
+      <i class="bi bi-chat-quote me-1"></i>ગુજરાતી
+    </div>
+    <div class="sk-text gujarati-text p-3 rounded" id="contentGu">{{ bhajan.content_gujarati }}</div>
+  </div>
+
+  <!-- English pronunciation section -->
+  <div id="sectionEn" class="sk-section mb-4">
+    <div class="sk-section-label text-uppercase small fw-semibold text-muted mb-2">
+      <i class="bi bi-alphabet me-1"></i>Pronunciation / ઉચ્ચાર
+    </div>
+    <div class="sk-text english-text p-3 rounded" id="contentEn">{{ bhajan.content_english }}</div>
+  </div>
+
+  <!-- QR Code — scroll to find it, scan to share -->
+  <div class="sk-qr-section text-center border-top pt-4 mt-4 pb-2">
+    <p class="text-muted small mb-2">📱 Scan to open this bhajan on any device</p>
+    <img src="{{ url_for('public.bhajan_qrcode', slug=bhajan.slug) }}"
+         alt="QR Code for {{ bhajan.title_english }}"
+         class="sk-qr-img rounded border p-2 bg-white"
+         width="180" height="180"
+         loading="lazy" />
+    <p class="text-muted small mt-2">{{ bhajan.title_gujarati }}</p>
+  </div>
+
+</div><!-- #bhajanContent -->
+
+<!-- Share button -->
+<div class="text-center mt-2 mb-4">
+  <button class="btn btn-outline-secondary btn-sm" id="shareBtn" title="Share this bhajan" aria-label="Share">
+    <i class="bi bi-share-fill me-1"></i>Share
+  </button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // ── Dropdown navigation ──────────────────────────────────────
+  document.getElementById('bhajanDropdown')
+    .addEventListener('change', function () { window.location.href = this.value; });
+
+  // ── View mode ────────────────────────────────────────────────
+  const secGu = document.getElementById('sectionGu');
+  const secEn = document.getElementById('sectionEn');
+  const titleGu = document.getElementById('titleGu');
+  const titleEn = document.getElementById('titleEn');
+
+  function applyView(mode) {
+    secGu.style.display   = (mode === 'en')   ? 'none' : '';
+    secEn.style.display   = (mode === 'gu')   ? 'none' : '';
+    titleGu.style.display = (mode === 'en')   ? 'none' : '';
+    titleEn.style.display = (mode === 'gu')   ? 'none' : '';
+    localStorage.setItem('sk_view', mode);
+  }
+
+  document.querySelectorAll('input[name="viewMode"]').forEach(r => {
+    r.addEventListener('change', () => applyView(r.value));
+  });
+
+  const savedView = localStorage.getItem('sk_view') || 'both';
+  const radioMap  = { both: 'vBoth', gu: 'vGu', en: 'vEn' };
+  const radioEl   = document.getElementById(radioMap[savedView] || 'vBoth');
+  if (radioEl) { radioEl.checked = true; applyView(savedView); }
+
+  // ── Font size ────────────────────────────────────────────────
+  const content  = document.getElementById('bhajanContent');
+  let   fontSize = parseInt(localStorage.getItem('sk_font') || '18', 10);
+
+  function applyFont() {
+    content.style.fontSize = fontSize + 'px';
+    localStorage.setItem('sk_font', fontSize);
+  }
+  applyFont();
+
+  document.getElementById('fontPlus').addEventListener('click', () => {
+    if (fontSize < 40) { fontSize += 2; applyFont(); }
+  });
+  document.getElementById('fontMinus').addEventListener('click', () => {
+    if (fontSize > 12) { fontSize -= 2; applyFont(); }
+  });
+
+  // ── Share ────────────────────────────────────────────────────
+  document.getElementById('shareBtn').addEventListener('click', async () => {
+    const data = {
+      title: '{{ bhajan.title_gujarati | e }} — {{ bhajan.title_english | e }}',
+      url:   window.location.href,
+    };
+    if (navigator.share) {
+      try { await navigator.share(data); } catch (_) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      } catch (_) {
+        prompt('Copy this link:', window.location.href);
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

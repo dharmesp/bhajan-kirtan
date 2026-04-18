@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}First-time Setup — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+
+      <div class="text-center mb-4">
+        <i class="bi bi-person-gear text-primary" style="font-size:3rem;"></i>
+        <h2 class="mt-2 fw-bold">Create Admin Account</h2>
+        <p class="text-muted">This is a first-time setup. You will use these credentials to log in at <code>/getmein</code>.</p>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+          <form method="POST" action="{{ url_for('setup.setup') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="mb-3">
+              <label for="username" class="form-label fw-semibold">Username</label>
+              <input type="text" class="form-control form-control-lg" id="username"
+                     name="username" placeholder="admin" required minlength="3"
+                     autocomplete="username" />
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <input type="password" class="form-control form-control-lg" id="password"
+                       name="password" placeholder="Minimum 8 characters"
+                       required minlength="8" autocomplete="new-password" />
+                <button class="btn btn-outline-secondary" type="button" id="togglePw"
+                        aria-label="Show/hide password">
+                  <i class="bi bi-eye" id="pwIcon"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="confirm_password" class="form-label fw-semibold">Confirm Password</label>
+              <input type="password" class="form-control form-control-lg" id="confirm_password"
+                     name="confirm_password" placeholder="Repeat password"
+                     required autocomplete="new-password" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+              <i class="bi bi-check2-circle me-1"></i>Create Account &amp; Continue
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('togglePw')?.addEventListener('click', function () {
+  const pw = document.getElementById('password');
+  const ic = document.getElementById('pwIcon');
+  if (pw.type === 'password') { pw.type = 'text'; ic.className = 'bi bi-eye-slash'; }
+  else { pw.type = 'password'; ic.className = 'bi bi-eye'; }
+});
+</script>
+{% endblock %}

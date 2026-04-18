@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Bhajan — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+      <li class="breadcrumb-item active">{{ action }} Bhajan</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h4 class="fw-bold mb-0">
+      {% if action == 'Add' %}
+      <i class="bi bi-plus-circle text-primary me-2"></i>Add New Bhajan
+      {% else %}
+      <i class="bi bi-pencil-square text-primary me-2"></i>Edit Bhajan
+      {% endif %}
+    </h4>
+    {% if action == 'Edit' and bhajan %}
+    <a href="{{ url_for('public.view_bhajan', slug=bhajan.slug) }}" target="_blank"
+       class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-eye me-1"></i>Preview
+    </a>
+    {% endif %}
+  </div>
+
+  <form method="POST" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <!-- Section: Titles -->
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-type me-2 text-primary"></i>Titles
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label for="title_gujarati" class="form-label fw-semibold">
+              ગુજરાતી શીર્ષક <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control gujarati-text fs-5"
+                   id="title_gujarati" name="title_gujarati"
+                   value="{{ bhajan.title_gujarati if bhajan else '' }}"
+                   placeholder="ભજનનું નામ…"
+                   required />
+            <div class="form-text">Enter the title in Gujarati script.</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="title_english" class="form-label fw-semibold">
+              English Title / Pronunciation <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control"
+                   id="title_english" name="title_english"
+                   value="{{ bhajan.title_english if bhajan else '' }}"
+                   placeholder="Bhajan name in English…"
+                   required />
+            <div class="form-text">Used for the URL slug and dropdown label.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Content -->
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-file-text me-2 text-primary"></i>Content
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+
+          <!-- Gujarati content -->
+          <div class="col-12 col-lg-6">
+            <label for="content_gujarati" class="form-label fw-semibold">
+              <i class="bi bi-chat-quote me-1 text-primary"></i>ગુજરાતી લખાણ
+            </label>
+            <textarea class="form-control gujarati-text sk-content-ta"
+                      id="content_gujarati" name="content_gujarati"
+                      rows="16"
+                      placeholder="ભજન / કીર્તનનું ગુજરાતી લખાણ…&#10;&#10;દરેક પંક્તિ નવી લાઇન પર લખો.">{{ bhajan.content_gujarati if bhajan else '' }}</textarea>
+            <div class="form-text">Paste or type Gujarati lyrics. Each line break is preserved.</div>
+          </div>
+
+          <!-- English pronunciation -->
+          <div class="col-12 col-lg-6">
+            <label for="content_english" class="form-label fw-semibold">
+              <i class="bi bi-alphabet me-1 text-primary"></i>Pronunciation Guide (English)
+            </label>
+            <textarea class="form-control sk-content-ta"
+                      id="content_english" name="content_english"
+                      rows="16"
+                      placeholder="Write how to pronounce each line in English…&#10;&#10;E.g.: Jay swaaminaraayan, jay akshar purushottam…">{{ bhajan.content_english if bhajan else '' }}</textarea>
+            <div class="form-text">Phonetic English pronunciation. Each line break is preserved.</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Organisation -->
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-sliders me-2 text-primary"></i>Organisation
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-sm-5">
+            <label for="category_id" class="form-label fw-semibold">Category</label>
+            <select class="form-select" id="category_id" name="category_id">
+              <option value="">— None —</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}"
+                {% if bhajan and bhajan.category_id == cat.id %}selected{% endif %}>
+                {{ cat.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-sm-3">
+            <label for="display_order" class="form-label fw-semibold">Order</label>
+            <input type="number" class="form-control" id="display_order"
+                   name="display_order" value="{{ bhajan.display_order if bhajan else 999 }}"
+                   min="0" max="9999" />
+            <div class="form-text">Lower = appears first.</div>
+          </div>
+          <div class="col-6 col-sm-4">
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     id="is_active" name="is_active"
+                     {% if not bhajan or bhajan.is_active %}checked{% endif %} />
+              <label class="form-check-label fw-semibold" for="is_active">Visible on site</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR preview (edit mode) -->
+    {% if action == 'Edit' and bhajan %}
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-qr-code me-2 text-primary"></i>QR Code Preview
+      </div>
+      <div class="card-body text-center">
+        <img src="{{ url_for('admin.bhajan_qrcode_admin', bhajan_id=bhajan.id) }}"
+             alt="QR Code" class="rounded border p-2 bg-white" width="180" height="180" />
+        <p class="text-muted small mt-2">Slug: <code>{{ bhajan.slug }}</code></p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2 flex-wrap">
+      <button type="submit" class="btn btn-primary btn-lg">
+        {% if action == 'Add' %}
+        <i class="bi bi-plus-circle me-1"></i>Add Bhajan
+        {% else %}
+        <i class="bi bi-save me-1"></i>Save Changes
+        {% endif %}
+      </button>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-lg">
+        <i class="bi bi-x me-1"></i>Cancel
+      </a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

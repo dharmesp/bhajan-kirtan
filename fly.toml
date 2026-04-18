@@ -1,0 +1,27 @@
+# fly.toml — generated for https://github.com/dharmesp/bhajan-kirtan
+app = 'bhajan-kirtan'
+primary_region = 'lax'   # Los Angeles — closest to Irvine, CA
+
+[build]
+
+# Persistent volume: SQLite DB lives at /data on the machine
+[[mounts]]
+  source      = 'shrikirtan_data'
+  destination = '/data'
+
+[env]
+  # Point Flask to the persistent volume path
+  DATABASE_URL = 'sqlite:////data/shrikirtan.db'
+  # SECRET_KEY must be set via: fly secrets set SECRET_KEY=$(openssl rand -hex 32)
+
+[http_service]
+  internal_port       = 8080
+  force_https         = true
+  auto_stop_machines  = 'stop'   # sleeps when no traffic → saves cost
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory   = '256mb'
+  cpu_kind = 'shared'
+  cpus     = 1
