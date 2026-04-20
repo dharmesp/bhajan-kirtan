@@ -51,6 +51,7 @@
           <th>Bhajan</th>
           <th class="d-none d-sm-table-cell">Category</th>
           <th class="text-center" style="width:90px">Visible</th>
+          <th class="text-center" style="width:60px"></th>
         </tr>
       </thead>
       <tbody>
@@ -93,6 +94,15 @@
                      {{ 'checked' if b.is_visible else '' }}
                      style="width:2.5em;height:1.4em;cursor:pointer" />
             </div>
+          </td>
+
+          <!-- View link -->
+          <td class="text-center">
+            <a href="{{ url_for('public.view_bhajan', slug=b.slug) }}"
+               target="_blank"
+               class="btn btn-sm btn-outline-secondary" title="View bhajan">
+              <i class="bi bi-eye"></i>
+            </a>
           </td>
         </tr>
         {% endfor %}
