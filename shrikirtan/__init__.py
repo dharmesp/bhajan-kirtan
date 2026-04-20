@@ -59,15 +59,18 @@ def create_app():
         db.create_all()
 
         # Add is_visible column to existing bhajans tables (one-time migration)
-        from sqlalchemy import text, inspect as sa_inspect
-        insp = sa_inspect(db.engine)
-        cols = [c['name'] for c in insp.get_columns('bhajans')]
-        if 'is_visible' not in cols:
-            with db.engine.connect() as conn:
-                conn.execute(text(
-                    'ALTER TABLE bhajans ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1'
-                ))
-                conn.commit()
+        try:
+            from sqlalchemy import text, inspect as sa_inspect
+            insp = sa_inspect(db.engine)
+            cols = [c['name'] for c in insp.get_columns('bhajans')]
+            if 'is_visible' not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        'ALTER TABLE bhajans ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1'
+                    ))
+                    conn.commit()
+        except Exception:
+            pass  # Column already exists or table not yet created — safe to ignore
 
     from .routes.public import public_bp
     from .routes.admin import admin_bp
