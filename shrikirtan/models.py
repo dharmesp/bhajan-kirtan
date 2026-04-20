@@ -27,6 +27,7 @@ class Bhajan(db.Model):
     slug = db.Column(db.String(300), nullable=False, unique=True, index=True)
     display_order = db.Column(db.Integer, default=999)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_visible = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -78,6 +79,23 @@ class Setting(db.Model):
 
 class AdminUser(db.Model):
     __tablename__ = 'admin_users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, password):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
+
+    def check_password(self, password):
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
+
+
+class SiteManager(db.Model):
+    __tablename__ = 'site_managers'
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)

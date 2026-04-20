@@ -6,7 +6,7 @@ from flask import (
     Blueprint, render_template, redirect, url_for,
     session, request, flash, send_file
 )
-from ..models import db, Bhajan, Category, Setting, AdminUser
+from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager
 import qrcode
 
 admin_bp = Blueprint('admin', __name__)
@@ -356,3 +356,43 @@ def import_data():
     if skipped:    parts.append(f'{skipped} skipped (missing title)')
     flash('Import complete — ' + (', '.join(parts) if parts else 'nothing new to import.'), 'success')
     return redirect(url_for('admin.dashboard'))
+
+
+# ── Site Manager CRUD ─────────────────────────────────────────────────────────
+
+@admin_bp.route('/admin/managers')
+@login_required
+def managers():
+    mgrs = SiteManager.query.order_by(SiteManager.username).all()
+    return render_template('admin/managers.html', managers=mgrs)
+
+
+@admin_bp.route('/admin/managers/add', methods=['POST'])
+@login_required
+def add_manager():
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
+    if not username or not password:
+        flash('Username and password are required.', 'danger')
+    elif len(password) < 6:
+        flash('Password must be at least 6 characters.', 'danger')
+    elif SiteManager.query.filter_by(username=username).first():
+        flash(f'Manager "{username}" already exists.', 'warning')
+    else:
+        m = SiteManager(username=username)
+        m.set_password(password)
+        db.session.add(m)
+        db.session.commit()
+        flash(f'Site manager "{username}" created.', 'success')
+    return redirect(url_for('admin.managers'))
+
+
+@admin_bp.route('/admin/managers/delete/<int:manager_id>', methods=['POST'])
+@login_required
+def delete_manager(manager_id):
+    m = db.get_or_404(SiteManager, manager_id)
+    name = m.username
+    db.session.delete(m)
+    db.session.commit()
+    flash(f'Site manager "{name}" deleted.', 'info')
+    return redirect(url_for('admin.managers'))

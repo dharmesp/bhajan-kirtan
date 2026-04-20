@@ -14,7 +14,7 @@ def index():
     categories = Category.query.order_by(Category.display_order, Category.name).all()
     pagination = (
         Bhajan.query
-        .filter_by(is_active=True)
+        .filter(Bhajan.is_active == True, Bhajan.is_visible == True)
         .order_by(Bhajan.display_order, Bhajan.id)
         .paginate(page=page, per_page=PER_PAGE, error_out=False)
     )
@@ -33,7 +33,7 @@ def search_bhajans():
     if not q and not cat_id:
         return jsonify([])
 
-    query = Bhajan.query.filter(Bhajan.is_active == True)
+    query = Bhajan.query.filter(Bhajan.is_active == True, Bhajan.is_visible == True)
 
     if q:
         query = query.filter(Bhajan.title_english.ilike(f'%{q}%'))
@@ -56,7 +56,7 @@ def view_bhajan(slug):
     bhajan = Bhajan.query.filter_by(slug=slug, is_active=True).first_or_404()
     bhajans = (
         Bhajan.query
-        .filter_by(is_active=True)
+        .filter(Bhajan.is_active == True, Bhajan.is_visible == True)
         .order_by(Bhajan.display_order, Bhajan.id)
         .all()
     )
