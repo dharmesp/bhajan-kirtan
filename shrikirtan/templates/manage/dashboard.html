@@ -27,11 +27,19 @@
     </div>
   </div>
 
-  <!-- Search filter -->
-  <div class="mb-3">
+  <!-- Search + Category filters -->
+  <div class="mb-2">
     <input type="search" id="manageSearch" class="form-control"
            placeholder="Filter by name…" autocomplete="off" />
   </div>
+  {% if categories %}
+  <div class="d-flex flex-wrap gap-2 mb-3" id="catFilters">
+    <button class="btn btn-sm btn-primary cat-btn" data-cat="">All</button>
+    {% for cat in categories %}
+    <button class="btn btn-sm btn-outline-primary cat-btn" data-cat="{{ cat.id }}">{{ cat.name }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <!-- Table -->
   {% if bhajans %}
@@ -50,7 +58,8 @@
         <tr class="manage-row {% if not b.is_visible %}table-secondary opacity-50{% endif %}"
             data-id="{{ b.id }}"
             data-en="{{ b.title_english | lower }}"
-            data-gu="{{ b.title_gujarati | lower }}">
+            data-gu="{{ b.title_gujarati | lower }}"
+            data-cat="{{ b.category_id or '' }}">
 
           <!-- Order (click to edit) -->
           <td class="ps-3">
@@ -171,12 +180,30 @@ document.getElementById('hideAllBtn').addEventListener('click', function () {
   .finally(() => { this.disabled = false; });
 });
 
-// ── Search filter ─────────────────────────────────────────────────────────────
-document.getElementById('manageSearch').addEventListener('input', function () {
-  const q = this.value.toLowerCase().trim();
+// ── Search + Category filter ──────────────────────────────────────────────────
+let activeCat = '';
+
+function applyFilters() {
+  const q = document.getElementById('manageSearch').value.toLowerCase().trim();
   document.querySelectorAll('.manage-row').forEach(row => {
-    const match = !q || row.dataset.en.includes(q) || row.dataset.gu.includes(q);
-    row.style.display = match ? '' : 'none';
+    const matchQ  = !q || row.dataset.en.includes(q) || row.dataset.gu.includes(q);
+    const matchCat = !activeCat || row.dataset.cat === activeCat;
+    row.style.display = (matchQ && matchCat) ? '' : 'none';
+  });
+}
+
+document.getElementById('manageSearch').addEventListener('input', applyFilters);
+
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.cat-btn').forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-outline-primary');
+    });
+    this.classList.remove('btn-outline-primary');
+    this.classList.add('btn-primary');
+    activeCat = this.dataset.cat;
+    applyFilters();
   });
 });
 
