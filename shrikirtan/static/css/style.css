@@ -106,6 +106,37 @@ body {
   background: var(--bs-tertiary-bg);
   outline: none;
 }
+.sk-list-row.sk-now-playing {
+  background: rgba(34, 197, 94, 0.07);
+  border-left: 3px solid #22c55e;
+}
+.sk-list-row.sk-now-playing:hover,
+.sk-list-row.sk-now-playing:focus-visible {
+  background: rgba(34, 197, 94, 0.13);
+}
+
+/* ── Now Playing dot ─────────────────────────────────────────── */
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(1.5); }
+}
+.sk-np-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: sk-pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+/* In list rows: hide dot unless row is now-playing */
+.sk-list-row .sk-np-dot {
+  display: none;
+}
+.sk-list-row.sk-now-playing .sk-np-dot {
+  display: inline-block;
+}
+
 .sk-row-num {
   font-size: 0.75rem;
   min-width: 1.6rem;

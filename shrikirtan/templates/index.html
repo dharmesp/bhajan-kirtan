@@ -45,7 +45,9 @@
     <div class="sk-list rounded border overflow-hidden">
       {% for bhajan in bhajans %}
       <a href="{{ url_for('public.view_bhajan', slug=bhajan.slug) }}"
+         data-id="{{ bhajan.id }}"
          class="sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2">
+        <span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>
         <span class="sk-row-num text-muted flex-shrink-0">
           {{ (pagination.page - 1) * pagination.per_page + loop.index }}
         </span>
@@ -157,8 +159,10 @@
   function buildRow(item, q) {
     const a = document.createElement('a');
     a.href = item.url;
+    a.dataset.id = item.id;
     a.className = 'sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2';
     a.innerHTML =
+      '<span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>' +
       '<span class="flex-grow-1 overflow-hidden">' +
         '<span class="gujarati-text fw-semibold d-block text-truncate">' + item.title_gujarati + '</span>' +
         '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
@@ -190,6 +194,7 @@
       } else {
         noResultsEl.style.display = 'none';
         data.forEach(item => resultsEl.appendChild(buildRow(item, q)));
+        markNowPlaying(currentNpId);
         statusEl.textContent = data.length + ' bhajan' + (data.length === 1 ? '' : 's')
           + (q ? ' for "' + q + '"' : ' in this category');
       }
@@ -234,6 +239,33 @@
       doSearch(q);
     });
   });
+
+  // ── Now Playing polling ──────────────────────────────────────
+  let currentNpId = null;
+
+  function markNowPlaying(id) {
+    currentNpId = id;
+    document.querySelectorAll('.sk-list-row').forEach(row => {
+      row.classList.remove('sk-now-playing');
+    });
+    if (id) {
+      document.querySelectorAll('.sk-list-row[data-id="' + id + '"]').forEach(row => {
+        row.classList.add('sk-now-playing');
+      });
+    }
+  }
+
+  async function pollNowPlaying() {
+    try {
+      const resp = await fetch('/api/now-playing');
+      const data = await resp.json();
+      markNowPlaying(data ? data.id : null);
+    } catch (_) {}
+  }
+
+  pollNowPlaying();
+  setInterval(pollNowPlaying, 5000);
+
 })();
 </script>
 {% endblock %}

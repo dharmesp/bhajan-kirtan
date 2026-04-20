@@ -1,9 +1,10 @@
 from functools import wraps
+from datetime import datetime
 from flask import (
     Blueprint, render_template, redirect, url_for,
     session, request, jsonify, flash
 )
-from ..models import db, Bhajan, Category, SiteManager
+from ..models import db, Bhajan, Category, SiteManager, Setting
 
 manage_bp = Blueprint('manage', __name__)
 
@@ -102,3 +103,20 @@ def update_order(bhajan_id):
         return jsonify({'id': bhajan.id, 'display_order': bhajan.display_order})
     except (TypeError, ValueError):
         return jsonify({'error': 'Invalid order value'}), 400
+
+
+@manage_bp.route('/manage/api/now-playing/set/<int:bhajan_id>', methods=['POST'])
+@manager_login_required
+def set_now_playing(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    Setting.set('now_playing_id', str(bhajan.id))
+    Setting.set('now_playing_at', datetime.utcnow().isoformat())
+    return jsonify({'ok': True, 'id': bhajan.id})
+
+
+@manage_bp.route('/manage/api/now-playing/clear', methods=['POST'])
+@manager_login_required
+def clear_now_playing():
+    Setting.set('now_playing_id', '')
+    Setting.set('now_playing_at', '')
+    return jsonify({'ok': True})

@@ -1,4 +1,5 @@
 import io
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, send_file, request, jsonify
 from ..models import Bhajan, Category, Setting
 import qrcode
@@ -43,6 +44,7 @@ def search_bhajans():
 
     results = query.order_by(Bhajan.display_order, Bhajan.id).limit(200).all()
     return jsonify([{
+        'id':             b.id,
         'title_gujarati': b.title_gujarati,
         'title_english':  b.title_english,
         'category':       b.category.name if b.category else None,
@@ -61,6 +63,29 @@ def view_bhajan(slug):
         .all()
     )
     return render_template('bhajan.html', bhajan=bhajan, bhajans=bhajans)
+
+
+@public_bp.route('/api/now-playing')
+def now_playing():
+    np_id = Setting.get('now_playing_id', '')
+    np_at = Setting.get('now_playing_at', '')
+    if not np_id or not np_at:
+        return jsonify(None)
+    try:
+        ts = datetime.fromisoformat(np_at)
+        if (datetime.utcnow() - ts).total_seconds() > 60:
+            return jsonify(None)
+    except (ValueError, TypeError):
+        return jsonify(None)
+    bhajan = Bhajan.query.filter_by(id=int(np_id), is_active=True).first()
+    if not bhajan:
+        return jsonify(None)
+    return jsonify({
+        'id':             bhajan.id,
+        'slug':           bhajan.slug,
+        'title_gujarati': bhajan.title_gujarati,
+        'title_english':  bhajan.title_english,
+    })
 
 
 @public_bp.route('/qrcode.png')

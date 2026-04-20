@@ -58,7 +58,13 @@
 
 <!-- ── Main bhajan content ────────────────────────────────────── -->
 <div class="container py-3" id="bhajanContent">
-
+  <!-- Now Playing banner -->
+  <div id="nowPlayingBanner" class="text-center mb-3" style="display:none;">
+    <span class="badge bg-success px-3 py-2" style="font-size:.9rem;">
+      <span class="sk-np-dot d-inline-block align-middle me-1" aria-hidden="true"></span>
+      Now Playing
+    </span>
+  </div>
   <!-- Title block -->
   <div class="text-center mb-4">
     {% if bhajan.category %}
@@ -172,4 +178,47 @@
   });
 })();
 </script>
-{% endblock %}
+{% if session.get('manager_logged_in') %}
+<script>
+// Manager: auto-set now playing + heartbeat every 30s
+(function () {
+  const bhajanId  = {{ bhajan.id }};
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+  function heartbeat() {
+    fetch('/manage/api/now-playing/set/' + bhajanId, {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrfToken}
+    });
+  }
+
+  heartbeat();
+  const hbTimer = setInterval(heartbeat, 30000);
+
+  window.addEventListener('beforeunload', function () {
+    clearInterval(hbTimer);
+    const body = new URLSearchParams({csrf_token: csrfToken});
+    navigator.sendBeacon('/manage/api/now-playing/clear', body);
+  });
+})();
+</script>
+{% endif %}
+
+<script>
+// Now Playing poll: show banner if this bhajan is currently playing
+(function () {
+  const bhajanId = {{ bhajan.id }};
+  const banner   = document.getElementById('nowPlayingBanner');
+
+  async function pollNowPlaying() {
+    try {
+      const resp = await fetch('/api/now-playing');
+      const data = await resp.json();
+      banner.style.display = (data && data.id === bhajanId) ? '' : 'none';
+    } catch (_) {}
+  }
+
+  pollNowPlaying();
+  setInterval(pollNowPlaying, 5000);
+})();
+</script>{% endblock %}
