@@ -283,9 +283,7 @@ mark.sk-highlight {
 .sk-chip-scroll::-webkit-scrollbar { display: none; }
 
 /* Column widths — shared between header and rows */
-.sk-order-col  { width: 36px;  min-width: 36px;  margin-right: .5rem; text-align: center; }
 .sk-toggle-col { width: 62px;  min-width: 62px; }
-.sk-view-col   { width: 38px;  min-width: 38px; }
 
 /* Column header bar */
 .sk-manage-header {
@@ -307,22 +305,6 @@ mark.sk-highlight {
   background: var(--bs-tertiary-bg);
 }
 
-/* Order number — tap target */
-.sk-order-num {
-  font-size: .8rem;
-  cursor: pointer;
-  text-decoration: underline dotted;
-  display: block;
-  padding: 2px 0;
-  user-select: none;
-}
-.sk-order-input {
-  width: 44px;
-  font-size: .8rem;
-  padding: .2rem .25rem;
-  text-align: center;
-}
-
 /* Title typography */
 .sk-row-gu-title {
   font-size: .98rem;
@@ -334,9 +316,4 @@ mark.sk-highlight {
 }
 .sk-cat-badge { font-size: .62rem; }
 
-/* View button — compact square */
-.sk-view-btn {
-  padding: .25rem .4rem;
-  font-size: .85rem;
-  line-height: 1;
-}
+
