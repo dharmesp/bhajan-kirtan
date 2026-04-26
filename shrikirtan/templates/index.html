@@ -221,8 +221,8 @@
 
   clearBtn.addEventListener('click', () => {
     searchInput.value = '';
-    showStatic();
-    searchInput.focus();
+    clearBtn.style.display = 'none';
+    doSearch('');
   });
 
   document.querySelectorAll('.cat-filter').forEach(btn => {
@@ -234,9 +234,10 @@
       this.classList.add('active', 'btn-primary');
       this.classList.remove('btn-outline-primary');
       activeCat = this.dataset.cat;
-      const q = searchInput.value.trim();
-      // Always trigger a search/filter when category changes
-      doSearch(q);
+      // Clear search text when switching category
+      searchInput.value = '';
+      clearBtn.style.display = 'none';
+      doSearch('');
     });
   });
 
