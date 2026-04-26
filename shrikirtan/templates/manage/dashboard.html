@@ -17,7 +17,7 @@
 
   <!-- Search -->
   <div class="mb-2">
-    <input type="search" id="manageSearch" class="form-control form-control-sm"
+    <input type="text" id="manageSearch" class="form-control form-control-sm"
            placeholder="Filter by name…" autocomplete="off" />
   </div>
 
@@ -222,7 +222,7 @@ function applyFilters() {
   document.querySelectorAll('.manage-row').forEach(row => {
     const matchQ   = !q || row.dataset.en.includes(q) || row.dataset.gu.includes(q);
     const matchCat = !activeCat || row.dataset.cat === activeCat;
-    row.style.display = (matchQ && matchCat) ? '' : 'none';
+    row.classList.toggle('d-none', !(matchQ && matchCat));
   });
 }
 
