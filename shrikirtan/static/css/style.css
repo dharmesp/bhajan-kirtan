@@ -389,4 +389,58 @@ mark.sk-highlight {
   color: var(--bs-danger) !important;
 }
 
+/* ── Public tab bar (home + bhajan pages) ────────────────────── */
+body.sk-has-pub-tabbar {
+  padding-bottom: 60px;
+}
+.sk-pub-tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--bs-body-bg);
+  border-top: 1px solid var(--bs-border-color);
+  display: flex;
+  align-items: stretch;
+  z-index: 1030;
+  box-shadow: 0 -2px 10px rgba(0,0,0,.07);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.sk-pub-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: var(--bs-secondary-color);
+  font-size: .6rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 4px;
+  text-decoration: none;
+  transition: color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.sk-pub-tab i {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.sk-pub-tab:active {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-primary);
+}
+.sk-pub-tab.sk-tab-active {
+  color: var(--bs-primary) !important;
+}
+/* Language/font state — home list */
+body.sk-lang-gu .sk-row-en  { display: none !important; }
+body.sk-lang-en .sk-row-gu  { display: none !important; }
+/* Language/font state — bhajan page */
+body.sk-lang-gu #sectionEn,
+body.sk-lang-gu #titleEn    { display: none !important; }
+body.sk-lang-en #sectionGu,
+body.sk-lang-en #titleGu    { display: none !important; }
+
 
