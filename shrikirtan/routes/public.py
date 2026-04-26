@@ -1,6 +1,7 @@
 import io
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, send_file, request, jsonify
+from sqlalchemy import or_
 from ..models import Bhajan, Category, Setting
 import qrcode
 
@@ -37,7 +38,10 @@ def search_bhajans():
     query = Bhajan.query.filter(Bhajan.is_active == True, Bhajan.is_visible == True)
 
     if q:
-        query = query.filter(Bhajan.title_english.ilike(f'%{q}%'))
+        query = query.filter(or_(
+            Bhajan.title_english.ilike(f'%{q}%'),
+            Bhajan.title_gujarati.contains(q)
+        ))
 
     if cat_id and cat_id.isdigit():
         query = query.filter(Bhajan.category_id == int(cat_id))

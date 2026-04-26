@@ -28,7 +28,7 @@
       <i class="bi bi-search text-muted"></i>
     </span>
     <input type="text" class="form-control border-start-0 ps-0" id="bhajanSearch"
-           placeholder="Type to search by English name…"
+           placeholder="Search by name…"
            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
     <button class="btn btn-outline-secondary" id="clearSearch" type="button"
             style="display:none;" aria-label="Clear search">
@@ -164,7 +164,7 @@
     a.innerHTML =
       '<span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>' +
       '<span class="flex-grow-1 overflow-hidden">' +
-        '<span class="gujarati-text fw-semibold d-block text-truncate">' + item.title_gujarati + '</span>' +
+        '<span class="gujarati-text fw-semibold d-block text-truncate">' + highlight(item.title_gujarati, q) + '</span>' +
         '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
       '</span>' +
       (item.category
