@@ -39,6 +39,9 @@
 
   <!-- ── Bhajan list ──────────────────────────────────────────── -->
 
+  <!-- Pinned Now Playing row (populated by JS, always on top) -->
+  <div id="npPinnedRow" class="sk-list rounded border overflow-hidden mb-2" style="display:none;"></div>
+
   <!-- Static paginated list (shown when not searching) -->
   <div id="staticList">
     {% if bhajans %}
@@ -234,6 +237,7 @@
 
   // ── Now Playing polling ──────────────────────────────────────
   let currentNpId = null;
+  const npPin = document.getElementById('npPinnedRow');
 
   function markNowPlaying(id) {
     currentNpId = id;
@@ -247,11 +251,31 @@
     }
   }
 
+  function updateNpPin(data) {
+    if (data && data.id) {
+      npPin.innerHTML =
+        '<a href="/bhajan/' + data.slug + '" class="sk-list-row sk-now-playing text-decoration-none d-flex align-items-center gap-3 px-3 py-2">' +
+          '<span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>' +
+          '<span class="flex-shrink-0 text-success" style="font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;">Now Playing</span>' +
+          '<span class="flex-grow-1 overflow-hidden">' +
+            '<span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">' + data.title_gujarati + '</span>' +
+            '<span class="text-muted small d-block text-truncate sk-row-en">' + data.title_english + '</span>' +
+          '</span>' +
+          '<i class="bi bi-chevron-right text-muted flex-shrink-0"></i>' +
+        '</a>';
+      npPin.style.display = '';
+    } else {
+      npPin.style.display = 'none';
+      npPin.innerHTML = '';
+    }
+  }
+
   async function pollNowPlaying() {
     try {
       const resp = await fetch('/api/now-playing');
       const data = await resp.json();
       markNowPlaying(data ? data.id : null);
+      updateNpPin(data);
     } catch (_) {}
   }
 
