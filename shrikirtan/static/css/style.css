@@ -443,4 +443,113 @@ body.sk-lang-gu #titleEn    { display: none !important; }
 body.sk-lang-en #sectionGu,
 body.sk-lang-en #titleGu    { display: none !important; }
 
+/* ── Print / Save as PDF ─────────────────────────────────────── */
+.sk-print-sidebar {
+  display: none;
+}
 
+/* @page — set margins only; Chrome does not support @bottom-left margin boxes */
+@page {
+  margin: 0.6cm 0.6cm 1.2cm 0.6cm;
+}
+
+@media print {
+  /* Force browsers to print background colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all UI chrome */
+  .sk-navbar,
+  .sk-controls,
+  .sk-pub-tabbar,
+  #nowPlayingBanner,
+  .modal,
+  .modal-backdrop,
+  .container-fluid,
+  .sk-footer            { display: none !important; }
+
+  body.sk-has-pub-tabbar    { padding-bottom: 0 !important; }
+  html, body                { height: 100%; background: #fff !important; }
+
+  /* Full-height vertical divider line */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 20%;
+    border-left: 3px solid #b45309;
+    z-index: 9999;
+  }
+
+  /* ── Left sidebar — white panel, repeats on every page ── */
+  .sk-print-sidebar {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 20%;
+    height: 100%;
+    padding: 0.7cm 0.3cm 0;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  .sk-print-sidebar img.sk-print-qr {
+    width: 100%;
+    max-width: 108px;
+    height: auto;
+    border-radius: 6px;
+    border: 2px solid #fbbf24;
+    padding: 3px;
+    background: #fff;
+  }
+  .sk-print-sidebar-imgs {
+    margin-top: 0.35cm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25cm;
+    width: 100%;
+  }
+  .sk-print-sidebar-img {
+    width: 100%;
+    max-width: 100px;
+    height: auto;
+    border-radius: 5px;
+    border: none;
+    object-fit: contain;
+  }
+  .sk-print-pagenum        { display: none !important; }
+  /* ── Main content — pushed right ── */
+  #bhajanContent {
+    margin-left: 22% !important;
+    padding: 0.4cm 0.4cm 0 0.9cm !important;
+    background: transparent !important;
+  }
+
+  /* Section divider between lyrics chunks */
+  .sk-text p + p {
+    border-top: 1px dotted #fcd34d;
+    padding-top: 0.2cm;
+    margin-top: 0.1cm;
+  }
+
+  /* Clean up content area */
+  .sk-section-label         { display: none !important; }
+  .sk-text                  {
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    color: #1c0a00 !important;
+  }
+
+  /* Gujarati font for print */
+  .gujarati-text            { font-size: 17pt; line-height: 2.1; color: #1c0a00 !important; }
+  .english-text             { font-size: 13pt; line-height: 1.9; color: #2d1200 !important; }
+}

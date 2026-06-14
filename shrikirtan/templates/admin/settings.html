@@ -66,6 +66,60 @@
     </a>
 
   </form>
+
+  <!-- Print sidebar images -->
+  <hr class="my-4">
+  <h5 class="fw-bold mb-3"><i class="bi bi-image text-primary me-2"></i>Print Sidebar Images</h5>
+  <p class="text-muted small mb-3">
+    These images appear below the QR code in the print sidebar (e.g. temple logo, deity image).
+    Max 2 images · JPG / PNG / WEBP · under 5 MB each.
+  </p>
+
+  <div class="row g-3">
+    {% for slot in [1, 2] %}
+    <div class="col-sm-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-image me-1 text-primary"></i>Image {{ slot }}
+        </div>
+        <div class="card-body text-center">
+          {% if print_images[slot] %}
+            <img src="{{ url_for('public.print_image', slot=slot) }}"
+                 alt="Print image {{ slot }}"
+                 class="img-fluid rounded mb-3 border"
+                 style="max-height:160px;object-fit:contain;" />
+            <br>
+            <form method="POST" action="{{ url_for('admin.delete_print_image', slot=slot) }}"
+                  class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Remove image {{ slot }}?')">
+                <i class="bi bi-trash me-1"></i>Remove
+              </button>
+            </form>
+          {% else %}
+            <div class="text-muted py-3" style="font-size:.85rem;">No image uploaded</div>
+          {% endif %}
+        </div>
+        <div class="card-footer">
+          <form method="POST"
+                action="{{ url_for('admin.upload_print_image', slot=slot) }}"
+                enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="input-group input-group-sm">
+              <input type="file" class="form-control" name="image_file"
+                     accept="image/jpeg,image/png,image/gif,image/webp" required />
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-upload"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
 </div>
 {% endblock %}
 

@@ -32,6 +32,22 @@
 
 <!-- ── Main bhajan content ────────────────────────────────────── -->
 <div class="container py-3" id="bhajanContent">
+
+  <!-- Print-only sidebar: repeats on every page via position:fixed in @media print -->
+  <div class="sk-print-sidebar" aria-hidden="true">
+    <img src="{{ url_for('public.bhajan_qrcode', slug=bhajan.slug) }}"
+         alt="QR code for {{ bhajan.title_english }}" class="sk-print-qr">
+    {% if print_image_slots %}
+    <div class="sk-print-sidebar-imgs">
+      {% for slot in print_image_slots %}
+      <img src="{{ url_for('public.print_image', slot=slot) }}"
+           alt="Image {{ slot }}" class="sk-print-sidebar-img">
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="sk-print-pagenum" id="skPrintPageNum"></div>
+  </div>
+
   <!-- Now Playing banner -->
   <div id="nowPlayingBanner" class="text-center mb-3" style="display:none;">
     <span class="badge bg-success px-3 py-2" style="font-size:.9rem;">
@@ -140,6 +156,10 @@
     <i class="bi bi-fonts"></i>
     <span id="tabFontLabel">a</span>
   </button>
+  <button class="sk-pub-tab" id="tabPrint" type="button" aria-label="Print / Save PDF">
+    <i class="bi bi-printer-fill"></i>
+    <span>Print</span>
+  </button>
 </nav>
 
 <!-- Share / QR modal -->
@@ -202,6 +222,16 @@
     fontStep = (fontStep + 1) % 3;
     applyFont();
   });
+
+  // ── Print / Save PDF ─────────────────────────────────────────
+  (function () {
+    document.getElementById('tabPrint').addEventListener('click', function () {
+      const prev = document.title;
+      document.title = '{{ bhajan.title_english | e }}';
+      window.print();
+      document.title = prev;
+    });
+  })();
 
   // ── Share ────────────────────────────────────────────────────
   document.getElementById('pubShareBtn').addEventListener('click', async function () {

@@ -86,8 +86,11 @@ def create_app():
     @app.context_processor
     def inject_globals():
         from .models import Setting
+        # Collect print image slots that have a file uploaded
+        print_image_slots = [s for s in (1, 2) if Setting.get(f'print_image_{s}', '')]
         return {
             'app_title': Setting.get('app_title', 'ShriKirtan'),
+            'print_image_slots': print_image_slots,
         }
 
     return app

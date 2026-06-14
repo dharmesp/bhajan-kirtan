@@ -1,6 +1,7 @@
 import io
+import os
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, send_file, request, jsonify
+from flask import Blueprint, render_template, send_file, request, jsonify, abort
 from sqlalchemy import or_
 from ..models import Bhajan, Category, Setting
 import qrcode
@@ -126,3 +127,22 @@ def bhajan_qrcode(slug):
     img.save(buf, format='PNG')
     buf.seek(0)
     return send_file(buf, mimetype='image/png', max_age=3600)
+
+
+@public_bp.route('/print-image/<int:slot>')
+def print_image(slot):
+    if slot not in (1, 2):
+        abort(404)
+    fname = Setting.get(f'print_image_{slot}', '')
+    if not fname:
+        abort(404)
+    from flask import current_app
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    base = '/data' if db_url.startswith('sqlite:////data/') else current_app.instance_path
+    path = os.path.join(base, 'uploads', fname)
+    if not os.path.isfile(path):
+        abort(404)
+    ext = fname.rsplit('.', 1)[-1].lower()
+    mime_map = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+                'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
+    return send_file(path, mimetype=mime_map.get(ext, 'image/png'), max_age=3600)

@@ -1,5 +1,7 @@
 import io
 import json as json_module
+import os
+import uuid
 from datetime import datetime, timezone
 from functools import wraps
 from flask import (
@@ -209,10 +211,107 @@ def settings():
     if sample_bhajan:
         d = domain or request.host_url.rstrip('/')
         preview_url = f"{d}/bhajan/{sample_bhajan.slug}"
+    print_images = {
+        slot: Setting.get(f'print_image_{slot}', '')
+        for slot in [1, 2]
+    }
     return render_template('admin/settings.html',
                            domain=domain, app_title=app_title,
                            preview_url=preview_url,
-                           sample_bhajan=sample_bhajan)
+                           sample_bhajan=sample_bhajan,
+                           print_images=print_images)
+
+
+# ── Print sidebar image upload / delete ───────────────────────────────────────
+
+_ALLOWED_IMAGE_EXTS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+_MAX_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
+def _uploads_dir():
+    from flask import current_app
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    base = '/data' if db_url.startswith('sqlite:////data/') else current_app.instance_path
+    path = os.path.join(base, 'uploads')
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _validate_image(file_storage):
+    name = file_storage.filename or ''
+    ext = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+    if ext not in _ALLOWED_IMAGE_EXTS:
+        return None, 'Only JPG, PNG, GIF, or WEBP images are allowed.'
+    file_storage.seek(0, 2)
+    size = file_storage.tell()
+    file_storage.seek(0)
+    if size > _MAX_IMAGE_BYTES:
+        return None, 'Image must be under 5 MB.'
+    try:
+        from PIL import Image
+        img = Image.open(file_storage.stream)
+        img.verify()
+        file_storage.seek(0)
+    except Exception:
+        return None, 'File does not appear to be a valid image.'
+    # Normalise to png for simplicity; keep original ext otherwise
+    save_ext = 'jpg' if ext in ('jpg', 'jpeg') else ext
+    return save_ext, None
+
+
+@admin_bp.route('/admin/upload-image/<int:slot>', methods=['POST'])
+@login_required
+def upload_print_image(slot):
+    if slot not in (1, 2):
+        flash('Invalid image slot.', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    f = request.files.get('image_file')
+    if not f or not f.filename:
+        flash('No file selected.', 'warning')
+        return redirect(url_for('admin.settings'))
+
+    save_ext, err = _validate_image(f)
+    if err:
+        flash(err, 'danger')
+        return redirect(url_for('admin.settings'))
+
+    # Delete old file if present
+    old_fname = Setting.get(f'print_image_{slot}', '')
+    if old_fname:
+        old_path = os.path.join(_uploads_dir(), old_fname)
+        try:
+            if os.path.isfile(old_path):
+                os.remove(old_path)
+        except OSError:
+            pass
+
+    # Save with a UUID filename
+    fname = f'{uuid.uuid4().hex}.{save_ext}'
+    f.save(os.path.join(_uploads_dir(), fname))
+    Setting.set(f'print_image_{slot}', fname)
+    flash(f'Image {slot} uploaded successfully.', 'success')
+    return redirect(url_for('admin.settings'))
+
+
+@admin_bp.route('/admin/delete-image/<int:slot>', methods=['POST'])
+@login_required
+def delete_print_image(slot):
+    if slot not in (1, 2):
+        flash('Invalid image slot.', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    fname = Setting.get(f'print_image_{slot}', '')
+    if fname:
+        path = os.path.join(_uploads_dir(), fname)
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+        Setting.set(f'print_image_{slot}', '')
+        flash(f'Image {slot} removed.', 'info')
+    return redirect(url_for('admin.settings'))
 
 
 # ── QR Code (admin preview) ───────────────────────────────────────────────────
