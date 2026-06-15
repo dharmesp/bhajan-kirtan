@@ -85,34 +85,57 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://unpkg.com/nosleep.js@0.12.0/dist/NoSleep.min.js"></script>
 <script>
 (function () {
   // ── Dropdown navigation ──────────────────────────────────────
   document.getElementById('bhajanDropdown')
     .addEventListener('change', function () { window.location.href = this.value; });
 
-  // ── Screen Wake Lock via NoSleep.js ──────────────────────────
-  // Keeps screen on while reading a bhajan.
-  // Uses Wake Lock API (Chrome/Edge) with video fallback for iOS Safari.
-  // Must be triggered inside a user gesture — we use first tap/click.
-  const noSleep = new NoSleep();
-  let wakeLockEnabled = false;
+  // ── Screen Wake Lock ─────────────────────────────────────────
+  // Strategy 1: Wake Lock API (Chrome/Edge, requires HTTPS)
+  // Strategy 2: 1px looping video (iOS Safari + HTTP fallback)
+  // Both activated on first user gesture (browser policy).
 
-  function enableWakeLock() {
-    if (wakeLockEnabled) return;
-    noSleep.enable();
-    wakeLockEnabled = true;
+  let wakeLock = null;
+  let videoEl  = null;
+
+  function startVideo() {
+    if (videoEl) return;
+    videoEl = document.createElement('video');
+    videoEl.src      = '{{ url_for("static", filename="nosleep.mp4") }}';
+    videoEl.loop     = true;
+    videoEl.muted    = true;
+    videoEl.playsInline = true;
+    videoEl.setAttribute('playsinline', '');
+    videoEl.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+    document.body.appendChild(videoEl);
+    videoEl.play().catch(function () {});
   }
 
-  // Enable on first touch or click (required by browsers for autoplay policy)
-  document.addEventListener('touchstart', enableWakeLock, { once: true, passive: true });
-  document.addEventListener('click',      enableWakeLock, { once: true });
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        return; // Wake Lock API works, no need for video
+      } catch (_) {}
+    }
+    startVideo(); // Fallback to video trick
+  }
 
-  // Release when leaving the page
-  window.addEventListener('beforeunload', function () {
-    if (wakeLockEnabled) noSleep.disable();
+  // Re-acquire after returning to page
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      if (wakeLock) requestWakeLock();
+      if (videoEl)  videoEl.play().catch(function () {});
+    }
   });
+
+  // Must be inside a user gesture
+  function activate() {
+    requestWakeLock();
+  }
+  document.addEventListener('touchstart', activate, { once: true, passive: true });
+  document.addEventListener('click',      activate, { once: true });
 })();
 </script>
 {% if session.get('manager_logged_in') %}
