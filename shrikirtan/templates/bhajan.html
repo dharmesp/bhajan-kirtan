@@ -92,12 +92,13 @@
     .addEventListener('change', function () { window.location.href = this.value; });
 
   // ── Screen Wake Lock ─────────────────────────────────────────
-  // Strategy 1: Wake Lock API (Chrome/Edge, requires HTTPS)
-  // Strategy 2: 1px looping video (iOS Safari + HTTP fallback)
-  // Both activated on first user gesture (browser policy).
+  // Strategy 1: Wake Lock API (Chrome/Edge/Android PWA, HTTPS only)
+  // Strategy 2: 1px looping video (iOS Safari fallback)
+  // Wake Lock API does NOT require a user gesture in modern browsers.
 
-  let wakeLock = null;
-  let videoEl  = null;
+  let wakeLock   = null;
+  let videoEl    = null;
+  let videoReady = false;
 
   function startVideo() {
     if (videoEl) return;
@@ -109,33 +110,46 @@
     videoEl.setAttribute('playsinline', '');
     videoEl.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
     document.body.appendChild(videoEl);
-    videoEl.play().catch(function () {});
   }
 
   async function requestWakeLock() {
     if ('wakeLock' in navigator) {
       try {
         wakeLock = await navigator.wakeLock.request('screen');
-        return; // Wake Lock API works, no need for video
+        // Listen for release so we can re-request if page stays visible
+        wakeLock.addEventListener('release', function () {
+          if (document.visibilityState === 'visible') requestWakeLock();
+        });
+        return; // Wake Lock API works
       } catch (_) {}
     }
-    startVideo(); // Fallback to video trick
+    // Fallback: video needs a user gesture to play
+    if (videoEl && videoReady) {
+      videoEl.play().catch(function () {});
+    }
   }
 
-  // Re-acquire after returning to page
+  // Prepare video element early (load without playing)
+  startVideo();
+
+  // Re-acquire after returning from background / switching apps
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState === 'visible') {
-      if (wakeLock) requestWakeLock();
-      if (videoEl)  videoEl.play().catch(function () {});
+      requestWakeLock();
+      if (videoEl) videoEl.play().catch(function () {});
     }
   });
 
-  // Must be inside a user gesture
-  function activate() {
+  // Try immediately (works in Chrome/Android PWA without gesture)
+  requestWakeLock();
+
+  // Also try on first user gesture for browsers that still require it
+  function activateOnGesture() {
+    videoReady = true;
     requestWakeLock();
   }
-  document.addEventListener('touchstart', activate, { once: true, passive: true });
-  document.addEventListener('click',      activate, { once: true });
+  document.addEventListener('touchstart', activateOnGesture, { once: true, passive: true });
+  document.addEventListener('click',      activateOnGesture, { once: true });
 })();
 </script>
 {% if session.get('manager_logged_in') %}
