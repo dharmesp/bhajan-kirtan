@@ -85,11 +85,34 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://unpkg.com/nosleep.js@0.12.0/dist/NoSleep.min.js"></script>
 <script>
 (function () {
   // ── Dropdown navigation ──────────────────────────────────────
   document.getElementById('bhajanDropdown')
     .addEventListener('change', function () { window.location.href = this.value; });
+
+  // ── Screen Wake Lock via NoSleep.js ──────────────────────────
+  // Keeps screen on while reading a bhajan.
+  // Uses Wake Lock API (Chrome/Edge) with video fallback for iOS Safari.
+  // Must be triggered inside a user gesture — we use first tap/click.
+  const noSleep = new NoSleep();
+  let wakeLockEnabled = false;
+
+  function enableWakeLock() {
+    if (wakeLockEnabled) return;
+    noSleep.enable();
+    wakeLockEnabled = true;
+  }
+
+  // Enable on first touch or click (required by browsers for autoplay policy)
+  document.addEventListener('touchstart', enableWakeLock, { once: true, passive: true });
+  document.addEventListener('click',      enableWakeLock, { once: true });
+
+  // Release when leaving the page
+  window.addEventListener('beforeunload', function () {
+    if (wakeLockEnabled) noSleep.disable();
+  });
 })();
 </script>
 {% if session.get('manager_logged_in') %}
