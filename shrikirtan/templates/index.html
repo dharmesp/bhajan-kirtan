@@ -9,7 +9,7 @@
   <div class="d-flex flex-wrap gap-2 justify-content-center mb-3"
        id="catFilters" role="group" aria-label="Filter by category">
     <button class="btn btn-sm btn-primary cat-filter active" data-cat="">All</button>
-    {% for cat in categories %}
+    {% for cat in categories if cat.show_in_filter %}
     <button class="btn btn-sm btn-outline-primary cat-filter"
             data-cat="{{ cat.id }}">{{ cat.name }}</button>
     {% endfor %}

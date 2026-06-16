@@ -158,16 +158,30 @@
       <ul class="list-group">
         {% for cat in categories %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-tag-fill text-primary me-2"></i>{{ cat.name }}
+          <span>
+            <i class="bi bi-tag-fill text-primary me-2"></i>{{ cat.name }}
             <span class="text-muted small ms-1">(order: {{ cat.display_order }})</span>
+            {% if cat.show_in_filter %}
+            <span class="badge bg-success ms-1" style="font-size:.65rem;">filter on</span>
+            {% else %}
+            <span class="badge bg-secondary ms-1" style="font-size:.65rem;">filter off</span>
+            {% endif %}
           </span>
-          <form method="POST" action="{{ url_for('admin.delete_category', cat_id=cat.id) }}"
-                onsubmit="return confirm('Delete category \'{{ cat.name | e }}\'? Bhajans will be unlinked.');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </button>
-          </form>
+          <div class="d-flex gap-1">
+            <form method="POST" action="{{ url_for('admin.toggle_category_filter', cat_id=cat.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-sm {% if cat.show_in_filter %}btn-outline-success{% else %}btn-outline-secondary{% endif %}" title="Toggle filter chip">
+                <i class="bi bi-funnel{% if not cat.show_in_filter %}-fill{% endif %}"></i>
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.delete_category', cat_id=cat.id) }}"
+                  onsubmit="return confirm('Delete category \'{{ cat.name | e }}\'? Bhajans will be unlinked.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
         </li>
         {% endfor %}
       </ul>

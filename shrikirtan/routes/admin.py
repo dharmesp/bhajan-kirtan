@@ -179,6 +179,15 @@ def add_category():
     return redirect(url_for('admin.dashboard'))
 
 
+@admin_bp.route('/admin/category/toggle-filter/<int:cat_id>', methods=['POST'])
+@login_required
+def toggle_category_filter(cat_id):
+    cat = db.get_or_404(Category, cat_id)
+    cat.show_in_filter = not cat.show_in_filter
+    db.session.commit()
+    return redirect(url_for('admin.dashboard'))
+
+
 @admin_bp.route('/admin/category/delete/<int:cat_id>', methods=['POST'])
 @login_required
 def delete_category(cat_id):

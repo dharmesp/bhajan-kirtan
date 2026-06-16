@@ -72,6 +72,19 @@ def create_app():
         except Exception:
             pass  # Column already exists or table not yet created — safe to ignore
 
+        # Add show_in_filter column to categories (one-time migration)
+        try:
+            insp = sa_inspect(db.engine)
+            cols = [c['name'] for c in insp.get_columns('categories')]
+            if 'show_in_filter' not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        'ALTER TABLE categories ADD COLUMN show_in_filter BOOLEAN NOT NULL DEFAULT 1'
+                    ))
+                    conn.commit()
+        except Exception:
+            pass
+
     from .routes.public import public_bp
     from .routes.admin import admin_bp
     from .routes.setup import setup_bp

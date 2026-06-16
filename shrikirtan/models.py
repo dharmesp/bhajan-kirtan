@@ -9,6 +9,7 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     display_order = db.Column(db.Integer, default=0)
+    show_in_filter = db.Column(db.Boolean, default=True, nullable=False)
     bhajans = db.relationship('Bhajan', backref='category', lazy=True)
 
     def __repr__(self):
