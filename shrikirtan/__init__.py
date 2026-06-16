@@ -85,6 +85,23 @@ def create_app():
         except Exception:
             pass
 
+        # Migrate bhajan_categories junction table from legacy category_id
+        try:
+            from sqlalchemy import text, inspect as sa_inspect
+            insp = sa_inspect(db.engine)
+            tables = insp.get_table_names()
+            if 'bhajan_categories' in tables:
+                # Populate junction from legacy category_id where not already migrated
+                with db.engine.connect() as conn:
+                    conn.execute(text('''
+                        INSERT OR IGNORE INTO bhajan_categories (bhajan_id, category_id)
+                        SELECT id, category_id FROM bhajans
+                        WHERE category_id IS NOT NULL
+                    '''))
+                    conn.commit()
+        except Exception:
+            pass
+
     from .routes.public import public_bp
     from .routes.admin import admin_bp
     from .routes.setup import setup_bp

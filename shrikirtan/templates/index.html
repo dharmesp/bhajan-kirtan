@@ -186,8 +186,10 @@
         '<span class="gujarati-text fw-semibold d-block text-truncate">' + highlight(item.title_gujarati, q) + '</span>' +
         '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
       '</span>' +
-      (item.category
-        ? '<span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">' + item.category + '</span>'
+      (item.categories && item.categories.length
+        ? item.categories.map(function(c) {
+            return '<span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">' + c.name + '</span>';
+          }).join(' ')
         : '') +
       '<i class="bi bi-chevron-right text-muted flex-shrink-0"></i>';
     return a;

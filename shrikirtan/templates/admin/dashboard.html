@@ -104,8 +104,10 @@
           </td>
           <td class="d-none d-md-table-cell text-muted">{{ b.title_english }}</td>
           <td class="d-none d-sm-table-cell">
-            {% if b.category %}
-            <span class="badge rounded-pill text-bg-primary">{{ b.category.name }}</span>
+            {% if b.categories %}
+              {% for cat in b.categories %}
+              <span class="badge rounded-pill text-bg-primary me-1">{{ cat.name }}</span>
+              {% endfor %}
             {% else %}
             <span class="text-muted small">—</span>
             {% endif %}

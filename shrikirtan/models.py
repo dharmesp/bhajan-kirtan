@@ -2,6 +2,13 @@ import re
 from datetime import datetime
 from . import db
 
+# Many-to-many junction table: bhajan ↔ categories
+bhajan_categories = db.Table(
+    'bhajan_categories',
+    db.Column('bhajan_id',   db.Integer, db.ForeignKey('bhajans.id'),    primary_key=True),
+    db.Column('category_id', db.Integer, db.ForeignKey('categories.id'), primary_key=True),
+)
+
 
 class Category(db.Model):
     __tablename__ = 'categories'
@@ -24,7 +31,8 @@ class Bhajan(db.Model):
     title_english = db.Column(db.String(300), nullable=False)
     content_gujarati = db.Column(db.Text, nullable=False, default='')
     content_english = db.Column(db.Text, nullable=False, default='')
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)  # legacy, kept for migration
+    categories = db.relationship('Category', secondary='bhajan_categories', backref=db.backref('tagged_bhajans', lazy='dynamic'))
     slug = db.Column(db.String(300), nullable=False, unique=True, index=True)
     display_order = db.Column(db.Integer, default=999)
     is_active = db.Column(db.Boolean, default=True, nullable=False)

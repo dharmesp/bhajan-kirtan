@@ -45,15 +45,14 @@ def search_bhajans():
         ))
 
     if cat_id and cat_id.isdigit():
-        query = query.filter(Bhajan.category_id == int(cat_id))
+        query = query.filter(Bhajan.categories.any(Category.id == int(cat_id)))
 
     results = query.order_by(Bhajan.display_order, Bhajan.id).limit(200).all()
     return jsonify([{
         'id':             b.id,
         'title_gujarati': b.title_gujarati,
         'title_english':  b.title_english,
-        'category':       b.category.name if b.category else None,
-        'category_id':    b.category_id,
+        'categories':     [{'id': c.id, 'name': c.name} for c in b.categories],
         'url':            f'/bhajan/{b.slug}',
     } for b in results])
 

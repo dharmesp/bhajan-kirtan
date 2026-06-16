@@ -80,7 +80,7 @@ def add_bhajan():
         title_en = request.form.get('title_english', '').strip()
         content_gu = request.form.get('content_gujarati', '').strip()
         content_en = request.form.get('content_english', '').strip()
-        cat_id = request.form.get('category_id') or None
+        cat_ids = [int(x) for x in request.form.getlist('category_ids') if x.isdigit()]
         try:
             display_order = int(request.form.get('display_order', 999))
         except ValueError:
@@ -96,11 +96,12 @@ def add_bhajan():
                 title_english=title_en,
                 content_gujarati=content_gu,
                 content_english=content_en,
-                category_id=int(cat_id) if cat_id else None,
                 slug=slug,
                 display_order=display_order,
                 is_active=is_active,
             )
+            if cat_ids:
+                bhajan.categories = Category.query.filter(Category.id.in_(cat_ids)).all()
             db.session.add(bhajan)
             db.session.commit()
             flash(f'Bhajan "{title_en}" added successfully!', 'success')
@@ -121,7 +122,7 @@ def edit_bhajan(bhajan_id):
         title_en = request.form.get('title_english', '').strip()
         content_gu = request.form.get('content_gujarati', '').strip()
         content_en = request.form.get('content_english', '').strip()
-        cat_id = request.form.get('category_id') or None
+        cat_ids = [int(x) for x in request.form.getlist('category_ids') if x.isdigit()]
         try:
             display_order = int(request.form.get('display_order', 999))
         except ValueError:
@@ -137,7 +138,7 @@ def edit_bhajan(bhajan_id):
             bhajan.title_english = title_en
             bhajan.content_gujarati = content_gu
             bhajan.content_english = content_en
-            bhajan.category_id = int(cat_id) if cat_id else None
+            bhajan.categories = Category.query.filter(Category.id.in_(cat_ids)).all() if cat_ids else []
             bhajan.display_order = display_order
             bhajan.is_active = is_active
             db.session.commit()
