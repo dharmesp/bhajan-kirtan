@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Events — Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 px-3">
+
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+      <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Events</h4>
+      <small class="text-muted">Shown as bottom sheet on the home page</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Add Event
+      </a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Dashboard
+      </a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat == 'danger' else ('warning' if cat == 'warning' else ('info' if cat == 'info' else 'success')) }} alert-dismissible fade show py-2" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if events %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width:3rem;">Order</th>
+          <th>Title (EN)</th>
+          <th>Title (GU)</th>
+          <th style="width:5rem;">Image</th>
+          <th style="width:5rem;">Active</th>
+          <th style="width:8rem;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in events %}
+        <tr>
+          <td class="text-muted small">{{ ev.sort_order }}</td>
+          <td>
+            <span class="fw-semibold">{{ ev.title_en or '—' }}</span>
+            {% if ev.desc_en %}
+            <br><small class="text-muted text-truncate d-block" style="max-width:260px;">{{ ev.desc_en }}</small>
+            {% endif %}
+          </td>
+          <td>
+            <span class="gujarati-text">{{ ev.title_gu or '—' }}</span>
+          </td>
+          <td>
+            {% if ev.image_filename %}
+            <img src="{{ url_for('public.event_image', event_id=ev.id) }}"
+                 alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--bs-border-color);" />
+            {% else %}
+            <span class="text-muted small">None</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if ev.is_active %}
+            <span class="badge bg-success">Active</span>
+            {% else %}
+            <span class="badge bg-secondary">Hidden</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('admin.edit_event', event_id=ev.id) }}"
+                 class="btn btn-outline-primary btn-sm" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post"
+                    action="{{ url_for('admin.delete_event', event_id=ev.id) }}"
+                    onsubmit="return confirm('Delete this event?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
+    <p class="mb-3">No events yet.</p>
+    <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Add First Event
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

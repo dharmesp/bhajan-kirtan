@@ -8,7 +8,7 @@ from flask import (
     Blueprint, render_template, redirect, url_for,
     session, request, flash, send_file
 )
-from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager
+from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager, Event
 import qrcode
 
 admin_bp = Blueprint('admin', __name__)
@@ -495,3 +495,117 @@ def delete_manager(manager_id):
     db.session.commit()
     flash(f'Site manager "{name}" deleted.', 'info')
     return redirect(url_for('admin.managers'))
+
+
+# ── Events ────────────────────────────────────────────────────────────────────
+
+@admin_bp.route('/admin/events')
+@login_required
+def events():
+    ev_list = Event.query.order_by(Event.sort_order, Event.id).all()
+    return render_template('admin/events.html', events=ev_list)
+
+
+@admin_bp.route('/admin/events/add', methods=['GET', 'POST'])
+@login_required
+def add_event():
+    if request.method == 'POST':
+        title_en = request.form.get('title_en', '').strip()
+        title_gu = request.form.get('title_gu', '').strip()
+        desc_en  = request.form.get('desc_en', '').strip()
+        desc_gu  = request.form.get('desc_gu', '').strip()
+        try:
+            sort_order = int(request.form.get('sort_order', 0))
+        except ValueError:
+            sort_order = 0
+        is_active = request.form.get('is_active') == 'on'
+
+        event = Event(
+            title_en=title_en, title_gu=title_gu,
+            desc_en=desc_en, desc_gu=desc_gu,
+            sort_order=sort_order, is_active=is_active,
+        )
+        db.session.add(event)
+        db.session.flush()
+
+        f = request.files.get('image_file')
+        if f and f.filename:
+            save_ext, err = _validate_image(f)
+            if err:
+                db.session.rollback()
+                flash(err, 'danger')
+                return render_template('admin/event_form.html', event=None, action='Add')
+            fname = f'{uuid.uuid4().hex}.{save_ext}'
+            f.save(os.path.join(_uploads_dir(), fname))
+            event.image_filename = fname
+
+        db.session.commit()
+        flash('Event added.', 'success')
+        return redirect(url_for('admin.events'))
+
+    return render_template('admin/event_form.html', event=None, action='Add')
+
+
+@admin_bp.route('/admin/events/edit/<int:event_id>', methods=['GET', 'POST'])
+@login_required
+def edit_event(event_id):
+    event = db.get_or_404(Event, event_id)
+    if request.method == 'POST':
+        event.title_en = request.form.get('title_en', '').strip()
+        event.title_gu = request.form.get('title_gu', '').strip()
+        event.desc_en  = request.form.get('desc_en', '').strip()
+        event.desc_gu  = request.form.get('desc_gu', '').strip()
+        try:
+            event.sort_order = int(request.form.get('sort_order', 0))
+        except ValueError:
+            event.sort_order = 0
+        event.is_active = request.form.get('is_active') == 'on'
+
+        f = request.files.get('image_file')
+        if f and f.filename:
+            save_ext, err = _validate_image(f)
+            if err:
+                flash(err, 'danger')
+                return render_template('admin/event_form.html', event=event, action='Edit')
+            if event.image_filename:
+                old_path = os.path.join(_uploads_dir(), event.image_filename)
+                try:
+                    if os.path.isfile(old_path):
+                        os.remove(old_path)
+                except OSError:
+                    pass
+            fname = f'{uuid.uuid4().hex}.{save_ext}'
+            f.save(os.path.join(_uploads_dir(), fname))
+            event.image_filename = fname
+
+        if request.form.get('delete_image') == '1' and event.image_filename:
+            old_path = os.path.join(_uploads_dir(), event.image_filename)
+            try:
+                if os.path.isfile(old_path):
+                    os.remove(old_path)
+            except OSError:
+                pass
+            event.image_filename = None
+
+        db.session.commit()
+        flash('Event updated.', 'success')
+        return redirect(url_for('admin.events'))
+
+    return render_template('admin/event_form.html', event=event, action='Edit')
+
+
+@admin_bp.route('/admin/events/delete/<int:event_id>', methods=['POST'])
+@login_required
+def delete_event(event_id):
+    event = db.get_or_404(Event, event_id)
+    if event.image_filename:
+        path = os.path.join(_uploads_dir(), event.image_filename)
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    db.session.delete(event)
+    db.session.commit()
+    flash('Event deleted.', 'info')
+    return redirect(url_for('admin.events'))

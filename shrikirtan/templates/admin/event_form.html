@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Event — Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:640px;">
+
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{{ url_for('admin.events') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h4 class="fw-bold mb-0">{{ action }} Event</h4>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' }} alert-dismissible fade show py-2" role="alert">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-translate me-1"></i>English</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label">Title (English)</label>
+          <input type="text" name="title_en" class="form-control"
+                 value="{{ event.title_en if event else '' }}" maxlength="200" />
+        </div>
+        <div class="mb-0">
+          <label class="form-label">Description (English)</label>
+          <textarea name="desc_en" class="form-control" rows="3"
+                    maxlength="1000">{{ event.desc_en if event else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-translate me-1"></i>Gujarati</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label gujarati-text">શીર્ષક (ગુજરાતી)</label>
+          <input type="text" name="title_gu" class="form-control gujarati-text"
+                 value="{{ event.title_gu if event else '' }}" maxlength="200" />
+        </div>
+        <div class="mb-0">
+          <label class="form-label gujarati-text">વિગત (ગુજરાતી)</label>
+          <textarea name="desc_gu" class="form-control gujarati-text" rows="3"
+                    maxlength="1000">{{ event.desc_gu if event else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-image me-1"></i>Image <span class="text-muted fw-normal">(optional)</span></div>
+      <div class="card-body">
+        {% if event and event.image_filename %}
+        <div class="mb-2">
+          <img src="{{ url_for('public.event_image', event_id=event.id) }}"
+               alt="" class="rounded" style="max-width:200px;max-height:140px;object-fit:cover;border:1px solid var(--bs-border-color);" />
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="delete_image" value="1" id="chkDelImg" />
+          <label class="form-check-label text-danger" for="chkDelImg">Remove current image</label>
+        </div>
+        {% endif %}
+        <input type="file" name="image_file" class="form-control" accept="image/*" />
+        <div class="form-text">JPG, PNG, WEBP or GIF — max 5 MB. Leave blank to keep existing.</div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6">
+        <label class="form-label">Sort Order</label>
+        <input type="number" name="sort_order" class="form-control"
+               value="{{ event.sort_order if event else 0 }}" min="0" max="9999" />
+        <div class="form-text">Lower number = shown first.</div>
+      </div>
+      <div class="col-6 d-flex align-items-end pb-1">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="is_active" id="chkActive"
+                 {% if event is none or event.is_active %}checked{% endif %} />
+          <label class="form-check-label" for="chkActive">Active (visible to visitors)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i>{{ action }} Event
+      </button>
+      <a href="{{ url_for('admin.events') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

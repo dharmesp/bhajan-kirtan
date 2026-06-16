@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, send_file, request, jsonify, abort
 from sqlalchemy import or_
-from ..models import Bhajan, Category, Setting
+from ..models import Bhajan, Category, Setting, Event
 import qrcode
 
 public_bp = Blueprint('public', __name__)
@@ -143,6 +143,36 @@ def print_image(slot):
     if not os.path.isfile(path):
         abort(404)
     ext = fname.rsplit('.', 1)[-1].lower()
+    mime_map = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+                'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
+    return send_file(path, mimetype=mime_map.get(ext, 'image/png'), max_age=3600)
+
+
+@public_bp.route('/api/events')
+def api_events():
+    ev_list = Event.query.filter_by(is_active=True).order_by(Event.sort_order, Event.id).all()
+    return jsonify([{
+        'id':        e.id,
+        'title_en':  e.title_en,
+        'title_gu':  e.title_gu,
+        'desc_en':   e.desc_en,
+        'desc_gu':   e.desc_gu,
+        'image_url': f'/event-image/{e.id}' if e.image_filename else None,
+    } for e in ev_list])
+
+
+@public_bp.route('/event-image/<int:event_id>')
+def event_image(event_id):
+    event = Event.query.get_or_404(event_id)
+    if not event.image_filename:
+        abort(404)
+    from flask import current_app
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    base = '/data' if db_url.startswith('sqlite:////data/') else current_app.instance_path
+    path = os.path.join(base, 'uploads', event.image_filename)
+    if not os.path.isfile(path):
+        abort(404)
+    ext = event.image_filename.rsplit('.', 1)[-1].lower()
     mime_map = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
                 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp'}
     return send_file(path, mimetype=mime_map.get(ext, 'image/png'), max_age=3600)

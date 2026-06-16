@@ -124,6 +124,37 @@
 
 
 </div>
+
+<!-- ── Upcoming Events Bottom Sheet ──────────────────────────── -->
+<div id="evSheet" class="sk-event-sheet sk-ev-hidden" aria-label="Upcoming events" style="display:none;">
+  <!-- Peek handle: pill + title preview (always 56px tall) -->
+  <div id="evHandle" class="sk-event-handle px-3" role="button" tabindex="0" aria-label="Toggle upcoming events">
+    <div class="sk-event-handle-pill"></div>
+    <div class="d-flex align-items-center gap-2" style="min-height:0;overflow:hidden;">
+      <i class="bi bi-calendar-event text-warning flex-shrink-0" style="font-size:.9rem;"></i>
+      <span id="evPeekTitle" class="text-truncate fw-semibold flex-grow-1" style="font-size:.85rem;"></span>
+      <span id="evCountBadge" class="badge rounded-pill bg-warning text-dark flex-shrink-0" style="font-size:.68rem;display:none;"></span>
+    </div>
+  </div>
+  <!-- Full card body (hidden in peek state) -->
+  <div class="sk-event-body">
+    <div id="evDots" class="sk-event-dots"></div>
+    <div class="px-3 pb-1">
+      <img id="evImg" class="sk-event-img" src="" alt="" style="display:none;" />
+      <div id="evTitle" class="sk-event-title"></div>
+      <div id="evDesc" class="sk-event-desc"></div>
+    </div>
+    <div id="evNav" class="d-flex justify-content-between align-items-center px-3 pb-3 pt-1" style="display:none!important;">
+      <button id="evPrev" class="btn btn-sm btn-outline-secondary" aria-label="Previous event">
+        <i class="bi bi-chevron-left"></i> Prev
+      </button>
+      <button id="evNext" class="btn btn-sm btn-outline-secondary" aria-label="Next event">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -385,6 +416,151 @@
       }
     }
   });
+})();
+</script>
+
+<script>
+// ── Upcoming Events Bottom Sheet ─────────────────────────────
+(function () {
+  const sheet     = document.getElementById('evSheet');
+  const handle    = document.getElementById('evHandle');
+  const peekTitle = document.getElementById('evPeekTitle');
+  const countBadge= document.getElementById('evCountBadge');
+  const dotsEl    = document.getElementById('evDots');
+  const evImg     = document.getElementById('evImg');
+  const evTitle   = document.getElementById('evTitle');
+  const evDesc    = document.getElementById('evDesc');
+  const evNav     = document.getElementById('evNav');
+  const evPrev    = document.getElementById('evPrev');
+  const evNext    = document.getElementById('evNext');
+
+  let evList  = [];
+  let curIdx  = 0;
+  let state   = 'hidden';  // 'hidden' | 'peek' | 'open'
+
+  function setState(s) {
+    state = s;
+    sheet.classList.remove('sk-ev-hidden', 'sk-ev-peek', 'sk-ev-open');
+    sheet.classList.add('sk-ev-' + s);
+  }
+
+  function getLang() {
+    return document.body.classList.contains('sk-lang-en') ? 'en' : 'gu';
+  }
+
+  function renderCard(idx) {
+    const e    = evList[idx];
+    const lang = getLang();
+    const title = (lang === 'en' ? e.title_en : e.title_gu) || e.title_en || e.title_gu || '';
+    const desc  = (lang === 'en' ? e.desc_en  : e.desc_gu)  || '';
+
+    peekTitle.textContent = title;
+    evTitle.textContent   = title;
+    evDesc.textContent    = desc;
+
+    if (e.image_url) {
+      evImg.src = e.image_url;
+      evImg.style.display = '';
+    } else {
+      evImg.style.display = 'none';
+    }
+
+    // Dots
+    if (evList.length > 1) {
+      dotsEl.innerHTML = evList.map(function (_, i) {
+        return '<span class="sk-ev-dot' + (i === idx ? ' active' : '') + '"></span>';
+      }).join('');
+      evNav.style.removeProperty('display');
+    } else {
+      dotsEl.innerHTML = '';
+      evNav.style.setProperty('display', 'none', 'important');
+    }
+
+    evPrev.disabled = idx === 0;
+    evNext.disabled = idx === evList.length - 1;
+    curIdx = idx;
+  }
+
+  // ── Load events ───────────────────────────────────────────
+  async function loadEvents() {
+    try {
+      const resp = await fetch('/api/events');
+      evList = await resp.json();
+    } catch (_) { return; }
+
+    if (!evList.length) return;
+
+    if (evList.length > 1) {
+      countBadge.textContent = evList.length;
+      countBadge.style.display = '';
+    }
+
+    renderCard(0);
+    sheet.style.display = '';
+
+    if (window.scrollY < 80) {
+      setState('peek');
+    }
+  }
+
+  // ── Scroll show / hide ────────────────────────────────────
+  let scrollTimer = null;
+  window.addEventListener('scroll', function () {
+    if (!evList.length) return;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () {
+      if (state === 'open') return;
+      setState(window.scrollY < 80 ? 'peek' : 'hidden');
+    }, 40);
+  }, { passive: true });
+
+  // ── Handle tap → toggle ───────────────────────────────────
+  handle.addEventListener('click', function () {
+    setState(state === 'open' ? 'peek' : 'open');
+  });
+  handle.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handle.click(); }
+  });
+
+  // ── Touch swipe on sheet ──────────────────────────────────
+  let ty0 = 0, tx0 = 0;
+  sheet.addEventListener('touchstart', function (e) {
+    ty0 = e.touches[0].clientY;
+    tx0 = e.touches[0].clientX;
+  }, { passive: true });
+
+  sheet.addEventListener('touchend', function (e) {
+    const dy = ty0 - e.changedTouches[0].clientY;
+    const dx = tx0 - e.changedTouches[0].clientX;
+    if (Math.abs(dy) < 12 && Math.abs(dx) < 12) return; // tap handled by click
+
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      // Vertical: swipe up → open, swipe down → peek
+      if (dy > 30 && state === 'peek') setState('open');
+      if (dy < -30 && state === 'open') setState('peek');
+    } else if (state === 'open') {
+      // Horizontal: navigate cards
+      if (dx > 40 && curIdx < evList.length - 1) renderCard(curIdx + 1);
+      if (dx < -40 && curIdx > 0) renderCard(curIdx - 1);
+    }
+  }, { passive: true });
+
+  // ── Arrow nav buttons ─────────────────────────────────────
+  evPrev.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (curIdx > 0) renderCard(curIdx - 1);
+  });
+  evNext.addEventListener('click', function (e) {
+    e.stopPropagation();
+    if (curIdx < evList.length - 1) renderCard(curIdx + 1);
+  });
+
+  // ── Re-render on language change (observe body class) ─────
+  new MutationObserver(function () {
+    if (evList.length) renderCard(curIdx);
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  loadEvents();
 })();
 </script>
 {% endblock %}
