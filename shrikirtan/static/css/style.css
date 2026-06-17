@@ -46,6 +46,71 @@
   --bs-btn-disabled-border-color: #fbbf24;
 }
 
+/* ── Category filter pills — colorful borders ─────────────────── */
+#catFilters {
+  gap: 0.5rem;
+}
+
+.cat-filter {
+  border-width: 2px !important;
+  border-radius: 24px !important;
+  padding: 0.375rem 1.25rem !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: transparent;
+  font-size: 0.9rem;
+}
+
+/* Active button — filled with color */
+.cat-filter.active {
+  background: var(--sk-primary) !important;
+  color: white !important;
+  border-color: var(--sk-primary) !important;
+}
+
+/* Color rotation for individual category pills */
+.cat-filter[data-cat=""]:not(.active) {
+  border-color: var(--bs-secondary-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.cat-filter:nth-child(2):not(.active) {
+  border-color: var(--sk-cat-c1) !important;
+  color: var(--sk-cat-c1) !important;
+}
+
+.cat-filter:nth-child(3):not(.active) {
+  border-color: var(--sk-cat-c2) !important;
+  color: var(--sk-cat-c2) !important;
+}
+
+.cat-filter:nth-child(4):not(.active) {
+  border-color: var(--sk-cat-c3) !important;
+  color: var(--sk-cat-c3) !important;
+}
+
+.cat-filter:nth-child(5):not(.active) {
+  border-color: var(--sk-cat-c4) !important;
+  color: var(--sk-cat-c4) !important;
+}
+
+.cat-filter:nth-child(6):not(.active) {
+  border-color: var(--sk-cat-c5) !important;
+  color: var(--sk-cat-c5) !important;
+}
+
+.cat-filter:nth-child(7):not(.active) {
+  border-color: var(--sk-cat-c6) !important;
+  color: var(--sk-cat-c6) !important;
+}
+
+/* Hover state for unactive pills */
+.cat-filter:not(.active):hover,
+.cat-filter:not(.active):focus-visible {
+  background: rgba(6, 182, 212, 0.08) !important;
+  transform: translateY(-2px);
+}
+
 /* ── Google Fonts (loaded via <link> in base.html too) ──────── */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;500;700&family=Nunito:wght@400;600;700&display=swap');
 
@@ -60,6 +125,14 @@
   --sk-content-bg:     var(--bs-body-bg);
   --sk-border:         var(--bs-border-color);
   --sk-radius:         0.5rem;
+  
+  /* Category color palette — used for filter pill borders */
+  --sk-cat-c1:         #06b6d4;  /* cyan */
+  --sk-cat-c2:         #ec4899;  /* pink */
+  --sk-cat-c3:         #f97316;  /* orange */
+  --sk-cat-c4:         #8b5cf6;  /* purple */
+  --sk-cat-c5:         #10b981;  /* emerald */
+  --sk-cat-c6:         #eab308;  /* yellow */
 }
 
 [data-bs-theme="dark"] {
@@ -70,6 +143,37 @@
 body {
   font-family: var(--sk-font-body);
   scroll-behavior: smooth;
+}
+
+/* Main container padding */
+.container {
+  padding-left: 0.875rem !important;
+  padding-right: 0.875rem !important;
+}
+
+/* Search bar styling */
+.input-group {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--sk-border);
+  transition: all 0.2s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--sk-primary);
+  box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.1);
+}
+
+.input-group .form-control {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 0 !important;
+}
+
+.input-group .form-control:focus {
+  box-shadow: none;
+  background: transparent;
 }
 
 /* ── Navbar ─────────────────────────────────────────────────── */
@@ -92,11 +196,14 @@ body {
 /* ── Home: compact list ──────────────────────────────────────── */
 .sk-list {
   background: var(--bs-body-bg);
+  border-radius: 12px;
+  border: none !important;
 }
 .sk-list-row {
   border-bottom: 1px solid var(--sk-border);
   color: var(--bs-body-color);
   transition: background 0.1s ease;
+  padding: 0.875rem 1rem !important;
 }
 .sk-list-row:last-child {
   border-bottom: none;
@@ -149,6 +256,20 @@ body {
 .sk-row-en {
   font-size: 0.82rem;
   line-height: 1.3;
+}
+
+/* Category badge styling — matches pill colors */
+.sk-list-row .badge {
+  font-size: 0.65rem;
+  padding: 0.35rem 0.65rem;
+  font-weight: 500;
+  border-radius: 12px;
+}
+
+.sk-list-row .badge.text-bg-warning {
+  background: rgba(251, 191, 36, 0.15) !important;
+  color: #b45309 !important;
+  border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 /* ── Home: bhajan cards (kept for possible reuse) ────────────── */
