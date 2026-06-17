@@ -72,23 +72,17 @@
     const currentPageType = isListPage ? 'list' : 'detail';
     const lastPageType = sessionStorage.getItem('sk_last_page_type');
     
-    // Determine animation direction
-    let animationClass = null;
-    if (lastPageType) {
-      if (lastPageType === 'list' && currentPageType === 'detail') {
-        // Going from list to detail: slide from right
-        animationClass = 'sk-transition-forward';
-      } else if (lastPageType === 'detail' && currentPageType === 'list') {
-        // Going from detail back to list: slide from left
-        animationClass = 'sk-transition-backward';
-      }
-    }
-    
-    // Apply animation to appropriate container
-    if (animationClass) {
+    // Only apply transition animation if we're navigating between pages
+    if (lastPageType && lastPageType !== currentPageType) {
       const contentContainer = document.getElementById('bhajanContent') || document.getElementById('staticList');
       if (contentContainer) {
-        contentContainer.classList.add(animationClass);
+        if (lastPageType === 'list' && currentPageType === 'detail') {
+          // Going from list to detail: slide from right
+          contentContainer.classList.add('sk-transition-forward');
+        } else if (lastPageType === 'detail' && currentPageType === 'list') {
+          // Going from detail back to list: slide from left
+          contentContainer.classList.add('sk-transition-backward');
+        }
       }
     }
     

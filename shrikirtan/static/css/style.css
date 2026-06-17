@@ -593,11 +593,13 @@ body.sk-lang-en #titleGu    { display: none !important; }
 }
 
 .sk-transition-forward {
-  animation: sk-slide-in-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: sk-slide-in-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .sk-transition-backward {
-  animation: sk-slide-in-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: sk-slide-in-right 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
 }
 
 /* @page — set margins only; Chrome does not support @bottom-left margin boxes */
