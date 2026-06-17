@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="featherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d5f4f;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4a9b6f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d5f4f;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="eyeGrad" cx="50%" cy="40%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#daa520;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d5c3d;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <circle cx="100" cy="100" r="100" fill="#f8f5f0" opacity="0.9"/>
+  
+  <!-- Feather shaft -->
+  <path d="M 100 30 Q 98 70 100 120 Q 102 140 100 170" stroke="#1a3a2e" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Main feather vane (left) -->
+  <path d="M 100 35 Q 75 50 70 80 Q 68 100 72 130 Q 80 155 100 170" fill="url(#featherGrad)" opacity="0.85" stroke="#1a3a2e" stroke-width="1.5"/>
+  
+  <!-- Main feather vane (right) -->
+  <path d="M 100 35 Q 125 50 130 80 Q 132 100 128 130 Q 120 155 100 170" fill="url(#featherGrad)" opacity="0.85" stroke="#1a3a2e" stroke-width="1.5"/>
+  
+  <!-- Fine barbs (left side) -->
+  <g stroke="#4a9b6f" stroke-width="0.8" opacity="0.7">
+    <line x1="85" y1="50" x2="75" y2="55"/>
+    <line x1="82" y1="65" x2="68" y2="72"/>
+    <line x1="78" y1="80" x2="62" y2="90"/>
+    <line x1="75" y1="95" x2="60" y2="108"/>
+    <line x1="73" y1="110" x2="58" y2="125"/>
+    <line x1="72" y1="125" x2="60" y2="140"/>
+    <line x1="75" y1="140" x2="68" y2="155"/>
+  </g>
+  
+  <!-- Fine barbs (right side) -->
+  <g stroke="#4a9b6f" stroke-width="0.8" opacity="0.7">
+    <line x1="115" y1="50" x2="125" y2="55"/>
+    <line x1="118" y1="65" x2="132" y2="72"/>
+    <line x1="122" y1="80" x2="138" y2="90"/>
+    <line x1="125" y1="95" x2="140" y2="108"/>
+    <line x1="127" y1="110" x2="142" y2="125"/>
+    <line x1="128" y1="125" x2="140" y2="140"/>
+    <line x1="125" y1="140" x2="132" y2="155"/>
+  </g>
+  
+  <!-- Peacock eye spot (ocellus) -->
+  <circle cx="100" cy="65" r="15" fill="url(#eyeGrad)" stroke="#1a3a2e" stroke-width="2"/>
+  <circle cx="100" cy="65" r="10" fill="#0d5c3d" opacity="0.8"/>
+  <circle cx="100" cy="62" r="5" fill="#ffd700" opacity="0.9"/>
+  <circle cx="101" cy="61" r="2" fill="#fff" opacity="0.8"/>
+</svg>

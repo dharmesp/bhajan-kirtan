@@ -143,7 +143,6 @@
 body {
   font-family: var(--sk-font-body);
   scroll-behavior: smooth;
-  overflow-x: hidden;
 }
 
 /* Main container padding */
@@ -568,39 +567,6 @@ body.sk-lang-en #titleGu    { display: none !important; }
 /* ── Print / Save as PDF ─────────────────────────────────────── */
 .sk-print-sidebar {
   display: none;
-}
-
-/* ── Page Transitions ───────────────────────────────────────────── */
-@keyframes sk-slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes sk-slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.sk-transition-forward {
-  animation: sk-slide-in-left 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  will-change: transform, opacity;
-}
-
-.sk-transition-backward {
-  animation: sk-slide-in-right 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  will-change: transform, opacity;
 }
 
 /* @page — set margins only; Chrome does not support @bottom-left margin boxes */
