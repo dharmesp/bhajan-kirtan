@@ -143,6 +143,7 @@
 body {
   font-family: var(--sk-font-body);
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 /* Main container padding */
@@ -650,13 +651,14 @@ body.sk-lang-en #titleGu    { display: none !important; }
     left: 0;
     width: 20%;
     height: 100%;
-    padding: 0.7cm 0.3cm 0;
+    padding: 0.7cm 0.2cm 0;
     box-sizing: border-box;
     background: #fff;
+    overflow: hidden;
   }
   .sk-print-sidebar img.sk-print-qr {
-    width: 100%;
-    max-width: 108px;
+    width: 90%;
+    max-width: 100px;
     height: auto;
     border-radius: 6px;
     border: 2px solid #fbbf24;
@@ -670,10 +672,11 @@ body.sk-lang-en #titleGu    { display: none !important; }
     align-items: center;
     gap: 0.25cm;
     width: 100%;
+    overflow: hidden;
   }
   .sk-print-sidebar-img {
-    width: 100%;
-    max-width: 100px;
+    width: 90%;
+    max-width: 90px;
     height: auto;
     border-radius: 5px;
     border: none;
