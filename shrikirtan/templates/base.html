@@ -65,6 +65,38 @@
   <!-- ── Page content ───────────────────────────────────────────── -->
   {% block content %}{% endblock %}
 
+  <!-- ── Page Transition Logic ──────────────────────────────────── -->
+  <script>
+  (function () {
+    const isListPage = window.location.pathname === '/' || window.location.pathname.startsWith('/?');
+    const currentPageType = isListPage ? 'list' : 'detail';
+    const lastPageType = sessionStorage.getItem('sk_last_page_type');
+    
+    // Determine animation direction
+    let animationClass = null;
+    if (lastPageType) {
+      if (lastPageType === 'list' && currentPageType === 'detail') {
+        // Going from list to detail: slide from right
+        animationClass = 'sk-transition-forward';
+      } else if (lastPageType === 'detail' && currentPageType === 'list') {
+        // Going from detail back to list: slide from left
+        animationClass = 'sk-transition-backward';
+      }
+    }
+    
+    // Apply animation to appropriate container
+    if (animationClass) {
+      const contentContainer = document.getElementById('bhajanContent') || document.getElementById('staticList');
+      if (contentContainer) {
+        contentContainer.classList.add(animationClass);
+      }
+    }
+    
+    // Save current page type for next navigation
+    sessionStorage.setItem('sk_last_page_type', currentPageType);
+  })();
+  </script>
+
   <!-- ── Footer ─────────────────────────────────────────────────── -->
   <footer class="sk-footer mt-5 py-3 text-center border-top">
     <small class="text-muted">🙏 Jai Shri Krishna</small>
