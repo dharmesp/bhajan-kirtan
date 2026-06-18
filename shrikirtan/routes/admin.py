@@ -260,6 +260,15 @@ def toggle_category_filter(cat_id):
     return redirect(url_for('admin.dashboard'))
 
 
+@admin_bp.route('/admin/reset-view-counts', methods=['POST'])
+@login_required
+def reset_view_counts():
+    Bhajan.query.update({'view_count': 0})
+    db.session.commit()
+    flash('All view counts have been reset to 0.', 'success')
+    return redirect(url_for('admin.dashboard'))
+
+
 @admin_bp.route('/admin/category/delete/<int:cat_id>', methods=['POST'])
 @login_required
 def delete_category(cat_id):
