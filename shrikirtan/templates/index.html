@@ -46,20 +46,17 @@
          class="sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2">
         <span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>
         <span class="sk-row-num text-muted flex-shrink-0">
-          {{ (pagination.page - 1) * pagination.per_page + loop.index }}
+          {{ (pagination.page - 1) * pagination.per_page + loop.index }}{% if bhajan.audio_filename %}<i class="bi bi-music-note-beamed text-primary ms-1" title="Audio available"></i>{% endif %}
         </span>
         <span class="flex-grow-1 overflow-hidden">
           <span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">{{ bhajan.title_gujarati }}</span>
           <span class="text-muted d-block text-truncate sk-row-en">{{ bhajan.title_english }}</span>
         </span>
-        {% if bhajan.audio_filename %}
-        <i class="bi bi-music-note-beamed text-primary flex-shrink-0" title="Audio available" style="font-size:0.85rem;"></i>
-        {% endif %}
-        {% if bhajan.category %}
+        {% for cat in bhajan.categories %}
         <span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">
-          {{ bhajan.category.name }}
+          {{ cat.name }}
         </span>
-        {% endif %}
+        {% endfor %}
         <i class="bi bi-chevron-right text-muted flex-shrink-0"></i>
       </a>
       {% endfor %}
@@ -185,11 +182,13 @@
     a.className = 'sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2';
     a.innerHTML =
       '<span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>' +
+      (item.has_audio
+        ? '<span class="sk-row-num text-muted flex-shrink-0"></span><i class="bi bi-music-note-beamed text-primary ms-1" title="Audio available"></i>'
+        : '<span class="sk-row-num text-muted flex-shrink-0"></span>') +
       '<span class="flex-grow-1 overflow-hidden">' +
         '<span class="gujarati-text fw-semibold d-block text-truncate">' + highlight(item.title_gujarati, q) + '</span>' +
         '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
       '</span>' +
-      (item.has_audio ? '<i class="bi bi-music-note-beamed text-primary flex-shrink-0" title="Audio available" style="font-size:0.85rem;"></i>' : '') +
       (item.categories && item.categories.length
         ? item.categories.map(function(c) {
             return '<span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">' + c.name + '</span>';

@@ -57,9 +57,9 @@
   </div>
   <!-- Title block -->
   <div class="text-center mb-4">
-    {% if bhajan.category %}
-    <span class="badge bg-primary rounded-pill mb-2">{{ bhajan.category.name }}</span>
-    {% endif %}
+    {% for cat in bhajan.categories %}
+    <span class="badge bg-primary rounded-pill mb-2">{{ cat.name }}</span>
+    {% endfor %}
     <h1 class="gujarati-text fw-bold sk-bhajan-title" id="titleGu">{{ bhajan.title_gujarati }}</h1>
     <h2 class="sk-bhajan-subtitle text-muted" id="titleEn">{{ bhajan.title_english }}</h2>
   </div>
