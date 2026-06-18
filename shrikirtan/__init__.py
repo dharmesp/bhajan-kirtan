@@ -85,6 +85,19 @@ def create_app():
         except Exception:
             pass
 
+        # Add audio_filename column to bhajans (one-time migration)
+        try:
+            insp = sa_inspect(db.engine)
+            cols = [c['name'] for c in insp.get_columns('bhajans')]
+            if 'audio_filename' not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        'ALTER TABLE bhajans ADD COLUMN audio_filename VARCHAR(300)'
+                    ))
+                    conn.commit()
+        except Exception:
+            pass
+
         # Migrate bhajan_categories junction table from legacy category_id
         try:
             from sqlalchemy import text, inspect as sa_inspect

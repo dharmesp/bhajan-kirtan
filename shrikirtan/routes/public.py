@@ -1,7 +1,7 @@
 import io
 import os
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, send_file, request, jsonify, abort
+from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
 from sqlalchemy import or_
 from ..models import Bhajan, Category, Setting, Event
 import qrcode
@@ -53,6 +53,7 @@ def search_bhajans():
         'title_gujarati': b.title_gujarati,
         'title_english':  b.title_english,
         'categories':     [{'id': c.id, 'name': c.name} for c in b.categories],
+        'has_audio':      bool(b.audio_filename),
         'url':            f'/bhajan/{b.slug}',
     } for b in results])
 
@@ -128,6 +129,22 @@ def bhajan_qrcode(slug):
     img.save(buf, format='PNG')
     buf.seek(0)
     return send_file(buf, mimetype='image/png', max_age=3600)
+
+
+@public_bp.route('/bhajan/<slug>/audio')
+def bhajan_audio(slug):
+    bhajan = Bhajan.query.filter_by(slug=slug, is_active=True).first_or_404()
+    if not bhajan.audio_filename:
+        abort(404)
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    base = '/data' if db_url.startswith('sqlite:////data/') else current_app.instance_path
+    path = os.path.join(base, 'uploads', 'audio', bhajan.audio_filename)
+    if not os.path.isfile(path):
+        abort(404)
+    ext = bhajan.audio_filename.rsplit('.', 1)[-1].lower()
+    mime_map = {'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'ogg': 'audio/ogg', 'wav': 'audio/wav'}
+    return send_file(path, mimetype=mime_map.get(ext, 'audio/mpeg'),
+                     as_attachment=False, max_age=3600)
 
 
 @public_bp.route('/print-image/<int:slot>')

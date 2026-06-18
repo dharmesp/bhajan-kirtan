@@ -50,8 +50,11 @@
         </span>
         <span class="flex-grow-1 overflow-hidden">
           <span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">{{ bhajan.title_gujarati }}</span>
-          <span class="text-muted small d-block text-truncate sk-row-en">{{ bhajan.title_english }}</span>
+          <span class="text-muted d-block text-truncate sk-row-en">{{ bhajan.title_english }}</span>
         </span>
+        {% if bhajan.audio_filename %}
+        <i class="bi bi-music-note-beamed text-primary flex-shrink-0" title="Audio available" style="font-size:0.85rem;"></i>
+        {% endif %}
         {% if bhajan.category %}
         <span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">
           {{ bhajan.category.name }}
@@ -186,6 +189,7 @@
         '<span class="gujarati-text fw-semibold d-block text-truncate">' + highlight(item.title_gujarati, q) + '</span>' +
         '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
       '</span>' +
+      (item.has_audio ? '<i class="bi bi-music-note-beamed text-primary flex-shrink-0" title="Audio available" style="font-size:0.85rem;"></i>' : '') +
       (item.categories && item.categories.length
         ? item.categories.map(function(c) {
             return '<span class="badge rounded-pill text-bg-warning text-dark flex-shrink-0 d-none d-sm-inline">' + c.name + '</span>';
@@ -286,7 +290,7 @@
           '<span class="flex-shrink-0 text-success" style="font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;">Now Playing</span>' +
           '<span class="flex-grow-1 overflow-hidden">' +
             '<span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">' + data.title_gujarati + '</span>' +
-            '<span class="text-muted small d-block text-truncate sk-row-en">' + data.title_english + '</span>' +
+            '<span class="text-muted d-block text-truncate sk-row-en">' + data.title_english + '</span>' +
           '</span>' +
           '<i class="bi bi-chevron-right text-muted flex-shrink-0"></i>' +
         '</a>';

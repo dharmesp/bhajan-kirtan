@@ -66,25 +66,88 @@
 
   <!-- Gujarati section -->
   <div id="sectionGu" class="sk-section mb-4">
-    <div class="sk-section-label text-uppercase small fw-semibold text-muted mb-2">
-      <i class="bi bi-chat-quote me-1"></i>ગુજરાતી
-    </div>
     <div class="sk-text gujarati-text p-3 rounded" id="contentGu">{{ bhajan.content_gujarati }}</div>
   </div>
 
   <!-- English pronunciation section -->
   <div id="sectionEn" class="sk-section mb-4">
-    <div class="sk-section-label text-uppercase small fw-semibold text-muted mb-2">
-      <i class="bi bi-alphabet me-1"></i>Pronunciation / ઉચ્ચાર
-    </div>
     <div class="sk-text english-text p-3 rounded" id="contentEn">{{ bhajan.content_english }}</div>
   </div>
+
+  {% if bhajan.audio_filename %}
+  <!-- Audio player — loads only on button click -->
+  <div class="text-center my-4 pb-2">
+    <button id="audioPlayBtn"
+            style="width:56px;height:56px;border-radius:50%;background:#92400e;color:#fff;border:none;font-size:1.5rem;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(146,64,14,0.4);transition:transform .15s,box-shadow .15s;"
+            onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 6px 20px rgba(146,64,14,0.5)'"
+            onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 14px rgba(146,64,14,0.4)'"
+            aria-label="Play audio">
+      <i class="bi bi-play-fill" id="audioPlayIcon"></i>
+    </button>
+  </div>
+  {% endif %}
 
 </div><!-- #bhajanContent -->
 
 {% endblock %}
 
 {% block scripts %}
+{% if bhajan.audio_filename %}
+<script>
+(function () {
+  const btn  = document.getElementById('audioPlayBtn');
+  const icon = document.getElementById('audioPlayIcon');
+  let audio = null;
+
+  function setIcon(state) {
+    if (state === 'play')    icon.className = 'bi bi-play-fill';
+    if (state === 'pause')   icon.className = 'bi bi-pause-fill';
+    if (state === 'loading') icon.className = 'spinner-border spinner-border-sm';
+    if (state === 'error')   icon.className = 'bi bi-exclamation-lg';
+  }
+
+  function cleanup() {
+    if (audio) {
+      audio.pause();
+      audio.src = '';
+      audio.load();
+      audio = null;
+    }
+    btn.disabled = false;
+    setIcon('play');
+  }
+
+  btn.addEventListener('click', function () {
+    if (!audio) {
+      btn.disabled = true;
+      setIcon('loading');
+      audio = new Audio('/bhajan/{{ bhajan.slug }}/audio?v={{ bhajan.updated_at.strftime("%Y%m%d%H%M%S") if bhajan.updated_at else "0" }}');
+      audio.addEventListener('canplay', function () {
+        btn.disabled = false;
+        setIcon('pause');
+        audio.play();
+      }, { once: true });
+      audio.addEventListener('ended', cleanup);
+      audio.addEventListener('error', function () {
+        cleanup();
+        setIcon('error');
+      }, { once: true });
+      return;
+    }
+    if (audio.paused) {
+      audio.play();
+      setIcon('pause');
+    } else {
+      audio.pause();
+      setIcon('play');
+    }
+  });
+
+  window.addEventListener('beforeunload', cleanup);
+  window.addEventListener('pagehide', cleanup);
+})();
+</script>
+{% endif %}
 <script>
 (function () {
   // ── Dropdown navigation ──────────────────────────────────────

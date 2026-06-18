@@ -6,12 +6,47 @@ from datetime import datetime, timezone
 from functools import wraps
 from flask import (
     Blueprint, render_template, redirect, url_for,
-    session, request, flash, send_file
+    session, request, flash, send_file, current_app
 )
 from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager, Event
 import qrcode
 
 admin_bp = Blueprint('admin', __name__)
+
+ALLOWED_AUDIO = {'mp3', 'm4a', 'ogg', 'wav'}
+
+
+def _audio_upload_dir():
+    """Return (and create) the directory where audio files are stored."""
+    db_url = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    base = '/data' if db_url.startswith('sqlite:////data/') else current_app.instance_path
+    path = os.path.join(base, 'uploads', 'audio')
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _save_audio_file(file_storage):
+    """Validate, sanitize and save an uploaded audio file. Returns saved filename or None."""
+    if not file_storage or not file_storage.filename:
+        return None
+    original = file_storage.filename
+    ext = original.rsplit('.', 1)[-1].lower() if '.' in original else ''
+    if ext not in ALLOWED_AUDIO:
+        return None
+    # Keep original name but strip unsafe characters
+    import re as _re
+    stem = original.rsplit('.', 1)[0]
+    safe_stem = _re.sub(r'[^\w\-.]', '_', stem).strip('._') or 'audio'
+    filename = f"{safe_stem}.{ext}"
+    # Avoid collisions: append a short suffix if file already exists
+    dest_dir = _audio_upload_dir()
+    dest = os.path.join(dest_dir, filename)
+    if os.path.exists(dest):
+        suffix = uuid.uuid4().hex[:6]
+        filename = f"{safe_stem}_{suffix}.{ext}"
+        dest = os.path.join(dest_dir, filename)
+    file_storage.save(dest)
+    return filename
 
 
 def login_required(f):
@@ -104,6 +139,12 @@ def add_bhajan():
                 bhajan.categories = Category.query.filter(Category.id.in_(cat_ids)).all()
             db.session.add(bhajan)
             db.session.commit()
+            # Handle audio upload after commit (need bhajan.id)
+            audio_file = request.files.get('audio_file')
+            saved = _save_audio_file(audio_file)
+            if saved:
+                bhajan.audio_filename = saved
+                db.session.commit()
             flash(f'Bhajan "{title_en}" added successfully!', 'success')
             return redirect(url_for('admin.dashboard'))
 
@@ -141,6 +182,16 @@ def edit_bhajan(bhajan_id):
             bhajan.categories = Category.query.filter(Category.id.in_(cat_ids)).all() if cat_ids else []
             bhajan.display_order = display_order
             bhajan.is_active = is_active
+            # Handle audio upload
+            audio_file = request.files.get('audio_file')
+            saved = _save_audio_file(audio_file)
+            if saved:
+                # Delete old file if replacing
+                if bhajan.audio_filename:
+                    old_path = os.path.join(_audio_upload_dir(), bhajan.audio_filename)
+                    if os.path.isfile(old_path):
+                        os.remove(old_path)
+                bhajan.audio_filename = saved
             db.session.commit()
             flash(f'Bhajan "{title_en}" updated!', 'success')
             return redirect(url_for('admin.dashboard'))
@@ -154,10 +205,29 @@ def edit_bhajan(bhajan_id):
 def delete_bhajan(bhajan_id):
     bhajan = db.get_or_404(Bhajan, bhajan_id)
     name = bhajan.title_english
+    # Remove audio file if present
+    if bhajan.audio_filename:
+        path = os.path.join(_audio_upload_dir(), bhajan.audio_filename)
+        if os.path.isfile(path):
+            os.remove(path)
     db.session.delete(bhajan)
     db.session.commit()
     flash(f'Bhajan "{name}" deleted.', 'info')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/admin/bhajan/delete-audio/<int:bhajan_id>', methods=['POST'])
+@login_required
+def delete_bhajan_audio(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    if bhajan.audio_filename:
+        path = os.path.join(_audio_upload_dir(), bhajan.audio_filename)
+        if os.path.isfile(path):
+            os.remove(path)
+        bhajan.audio_filename = None
+        db.session.commit()
+        flash('Audio track removed.', 'success')
+    return redirect(url_for('admin.edit_bhajan', bhajan_id=bhajan_id))
 
 
 # ── Category CRUD ─────────────────────────────────────────────────────────────

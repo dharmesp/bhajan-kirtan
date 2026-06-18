@@ -11,13 +11,6 @@
   --bs-link-hover-color:    #92400e;
 }
 
-[data-bs-theme="dark"] {
-  --bs-primary:             #fbbf24;
-  --bs-primary-rgb:         251, 191, 36;
-  --bs-link-color:          #fbbf24;
-  --bs-link-hover-color:    #f59e0b;
-}
-
 /* Bootstrap 5 btn-outline-primary uses compiled values, not --bs-primary,
    so we override the component variables manually */
 .btn-outline-primary {
@@ -31,19 +24,6 @@
   --bs-btn-active-border-color:#b45309;
   --bs-btn-disabled-color:     #b45309;
   --bs-btn-disabled-border-color: #b45309;
-}
-
-[data-bs-theme="dark"] .btn-outline-primary {
-  --bs-btn-color:              #fbbf24;
-  --bs-btn-border-color:       #fbbf24;
-  --bs-btn-hover-color:        #1a0a00;
-  --bs-btn-hover-bg:           #fbbf24;
-  --bs-btn-hover-border-color: #fbbf24;
-  --bs-btn-active-color:       #1a0a00;
-  --bs-btn-active-bg:          #fbbf24;
-  --bs-btn-active-border-color:#fbbf24;
-  --bs-btn-disabled-color:     #fbbf24;
-  --bs-btn-disabled-border-color: #fbbf24;
 }
 
 /* ── Category filter pills — colorful borders ─────────────────── */
@@ -135,15 +115,11 @@
   --sk-cat-c6:         #eab308;  /* yellow */
 }
 
-[data-bs-theme="dark"] {
-  --sk-navbar-bg: #78350f;
-}
-
 /* ── Base ───────────────────────────────────────────────────── */
 body {
   font-family: var(--sk-font-body);
-  scroll-behavior: smooth;
-}
+  scroll-behavior: smooth;  user-select: none;
+  -webkit-user-select: none;}
 
 /* Main container padding */
 .container {
@@ -200,10 +176,10 @@ body {
   border: none !important;
 }
 .sk-list-row {
-  border-bottom: 1px solid var(--sk-border);
+  border-bottom: 1px solid #000;
   color: var(--bs-body-color);
   transition: background 0.1s ease;
-  padding: 0.875rem 1rem !important;
+  padding: 0.45rem 1rem !important;
 }
 .sk-list-row:last-child {
   border-bottom: none;
@@ -252,10 +228,13 @@ body {
 .sk-row-gu {
   font-size: 1.05rem;
   line-height: 1.4;
+  color: #111 !important;
 }
 .sk-row-en {
-  font-size: 0.82rem;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.3;
+  color: #111 !important;
 }
 
 /* Category badge styling — matches pill colors */
@@ -294,10 +273,6 @@ body {
   font-weight: 700;
   color: #92400e;
 }
-[data-bs-theme="dark"] .sk-hero-title {
-  color: #fbbf24;
-}
-
 /* ── Controls bar below sticky navbar ───────────────────────── */
 .sk-controls {
   background: var(--bs-body-bg);
@@ -372,11 +347,6 @@ mark.sk-highlight {
   border-radius: 2px;
   padding: 0 2px;
 }
-[data-bs-theme="dark"] mark.sk-highlight {
-  background: #92400e;
-  color: #fef3c7;
-}
-
 /* ── Responsive tweaks ───────────────────────────────────────── */
 @media (max-width: 575.98px) {
   .sk-controls .btn-group label {

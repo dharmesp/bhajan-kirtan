@@ -37,6 +37,7 @@ class Bhajan(db.Model):
     display_order = db.Column(db.Integer, default=999)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     is_visible = db.Column(db.Boolean, default=True, nullable=False)
+    audio_filename = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
