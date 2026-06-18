@@ -143,8 +143,10 @@ def bhajan_audio(slug):
         abort(404)
     ext = bhajan.audio_filename.rsplit('.', 1)[-1].lower()
     mime_map = {'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'ogg': 'audio/ogg', 'wav': 'audio/wav'}
-    return send_file(path, mimetype=mime_map.get(ext, 'audio/mpeg'),
-                     as_attachment=False, max_age=3600)
+    response = send_file(path, mimetype=mime_map.get(ext, 'audio/mpeg'),
+                        as_attachment=False, max_age=604800)
+    response.headers['Cache-Control'] = 'public, max-age=604800, immutable'
+    return response
 
 
 @public_bp.route('/print-image/<int:slot>')
