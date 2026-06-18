@@ -2,6 +2,7 @@ import io
 import json as json_module
 import os
 import uuid
+import zipfile
 from datetime import datetime, timezone
 from functools import wraps
 from flask import (
@@ -426,7 +427,7 @@ def export_data():
     cat_map    = {c.id: c.name for c in categories}
 
     data = {
-        "version": 1,
+        "version": 2,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "categories": [
             {"name": c.name, "display_order": c.display_order}
@@ -439,6 +440,8 @@ def export_data():
                 "content_gujarati": b.content_gujarati or "",
                 "content_english":  b.content_english or "",
                 "category":         cat_map.get(b.category_id),
+                "categories":       [cat.name for cat in b.categories],
+                "audio_filename":   b.audio_filename or "",
                 "slug":             b.slug,
                 "display_order":    b.display_order,
                 "is_active":        b.is_active,
@@ -498,9 +501,15 @@ def import_data():
             skipped += 1
             continue
 
-        cat_name = bdata.get('category')
-        cat_id   = cat_name_to_id.get(cat_name) if cat_name else None
+        # Prefer new "categories" list; fall back to legacy single "category"
+        cat_names = bdata.get('categories') or []
+        if not cat_names and bdata.get('category'):
+            cat_names = [bdata['category']]
+        cat_id   = cat_name_to_id.get(cat_names[0]) if cat_names else None
+        cat_objs = [db.session.get(Category, cat_name_to_id[n])
+                    for n in cat_names if n in cat_name_to_id]
         slug     = (bdata.get('slug') or '').strip()
+        audio_fn = (bdata.get('audio_filename') or '').strip() or None
 
         existing = Bhajan.query.filter_by(slug=slug).first() if slug else None
         if existing:
@@ -509,12 +518,15 @@ def import_data():
             existing.content_gujarati = bdata.get('content_gujarati', '')
             existing.content_english  = bdata.get('content_english',  '')
             existing.category_id      = cat_id
+            existing.categories       = cat_objs
             existing.display_order    = bdata.get('display_order', 999)
             existing.is_active        = bdata.get('is_active', True)
+            if audio_fn:
+                existing.audio_filename = audio_fn
             updated += 1
         else:
             new_slug = slug if slug else Bhajan.generate_unique_slug(title_en)
-            db.session.add(Bhajan(
+            new_b = Bhajan(
                 title_gujarati   = title_gu,
                 title_english    = title_en,
                 content_gujarati = bdata.get('content_gujarati', ''),
@@ -523,7 +535,10 @@ def import_data():
                 slug             = new_slug,
                 display_order    = bdata.get('display_order', 999),
                 is_active        = bdata.get('is_active', True),
-            ))
+                audio_filename   = audio_fn,
+            )
+            db.session.add(new_b)
+            new_b.categories = cat_objs
             added += 1
 
     db.session.commit()
@@ -534,6 +549,64 @@ def import_data():
     if updated:    parts.append(f'{updated} bhajan{"" if updated == 1 else "s"} updated')
     if skipped:    parts.append(f'{skipped} skipped (missing title)')
     flash('Import complete — ' + (', '.join(parts) if parts else 'nothing new to import.'), 'success')
+    return redirect(url_for('admin.dashboard'))
+
+
+# ── Audio ZIP Export / Import ─────────────────────────────────────────────────
+
+@admin_bp.route('/admin/export-audio')
+@login_required
+def export_audio():
+    """Download all audio files as a ZIP for backup/migration."""
+    audio_dir = _audio_upload_dir()
+    buf = io.BytesIO()
+    files_added = 0
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for fname in sorted(os.listdir(audio_dir)):
+            fpath = os.path.join(audio_dir, fname)
+            if os.path.isfile(fpath):
+                zf.write(fpath, fname)
+                files_added += 1
+    if files_added == 0:
+        flash('No audio files found to export.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+    buf.seek(0)
+    filename = f"shrikirtan_audio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    return send_file(buf, mimetype='application/zip',
+                     as_attachment=True, download_name=filename)
+
+
+@admin_bp.route('/admin/import-audio', methods=['POST'])
+@login_required
+def import_audio():
+    """Restore audio files from a previously exported ZIP."""
+    f = request.files.get('audio_zip')
+    if not f or not f.filename.lower().endswith('.zip'):
+        flash('Please upload a valid .zip file.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    audio_dir = _audio_upload_dir()
+    restored = skipped = 0
+    try:
+        with zipfile.ZipFile(f, 'r') as zf:
+            for entry in zf.infolist():
+                safe_name = os.path.basename(entry.filename)
+                if not safe_name or entry.is_dir():
+                    continue
+                ext = safe_name.rsplit('.', 1)[-1].lower() if '.' in safe_name else ''
+                if ext not in ALLOWED_AUDIO:
+                    skipped += 1
+                    continue
+                dest = os.path.join(audio_dir, safe_name)
+                with zf.open(entry) as src, open(dest, 'wb') as dst:
+                    dst.write(src.read())
+                restored += 1
+    except zipfile.BadZipFile:
+        flash('Invalid ZIP file — could not read archive.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+    parts = [f'{restored} audio file{"s" if restored != 1 else ""} restored']
+    if skipped:
+        parts.append(f'{skipped} skipped (not an allowed audio format)')
+    flash('Audio import complete — ' + ', '.join(parts) + '.', 'success')
     return redirect(url_for('admin.dashboard'))
 
 
