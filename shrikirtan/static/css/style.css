@@ -169,6 +169,19 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* ── Category filter scroll strip ───────────────────────────── */
+.sk-cat-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;          /* Firefox */
+  padding-bottom: 2px;
+}
+.sk-cat-scroll::-webkit-scrollbar { display: none; }
+.sk-cat-scroll .btn { flex-shrink: 0; white-space: nowrap; }
+
 /* ── Home: compact list ──────────────────────────────────────── */
 .sk-list {
   background: var(--bs-body-bg);

@@ -6,8 +6,7 @@
 
   <!-- Category filter chips -->
   {% if categories %}
-  <div class="d-flex flex-wrap gap-2 justify-content-center mb-3"
-       id="catFilters" role="group" aria-label="Filter by category">
+  <div class="sk-cat-scroll mb-3" role="group" aria-label="Filter by category" id="catFilters">
     <button class="btn btn-sm btn-primary cat-filter active" data-cat="">All</button>
     {% for cat in categories if cat.show_in_filter %}
     <button class="btn btn-sm btn-outline-primary cat-filter"
