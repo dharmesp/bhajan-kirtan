@@ -60,8 +60,10 @@ def search_bhajans():
 @public_bp.route('/bhajan/<slug>')
 def view_bhajan(slug):
     bhajan = Bhajan.query.filter_by(slug=slug, is_active=True).first_or_404()
+    # Only fetch columns needed for the dropdown — avoids loading full objects for all bhajans
     bhajans = (
         Bhajan.query
+        .with_entities(Bhajan.id, Bhajan.slug, Bhajan.title_gujarati, Bhajan.title_english)
         .filter(Bhajan.is_active == True, Bhajan.is_visible == True)
         .order_by(Bhajan.display_order, Bhajan.id)
         .all()
