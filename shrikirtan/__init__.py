@@ -98,6 +98,19 @@ def create_app():
         except Exception:
             pass
 
+        # Add view_count column to bhajans (one-time migration)
+        try:
+            insp = sa_inspect(db.engine)
+            cols = [c['name'] for c in insp.get_columns('bhajans')]
+            if 'view_count' not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        'ALTER TABLE bhajans ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0'
+                    ))
+                    conn.commit()
+        except Exception:
+            pass
+
         # Migrate bhajan_categories junction table from legacy category_id
         try:
             from sqlalchemy import text, inspect as sa_inspect

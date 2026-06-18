@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
 from sqlalchemy import or_
-from ..models import Bhajan, Category, Setting, Event
+from ..models import db, Bhajan, Category, Setting, Event
 import qrcode
 
 public_bp = Blueprint('public', __name__)
@@ -61,6 +61,12 @@ def search_bhajans():
 @public_bp.route('/bhajan/<slug>')
 def view_bhajan(slug):
     bhajan = Bhajan.query.filter_by(slug=slug, is_active=True).first_or_404()
+    # Increment view counter (silent — ignore any DB errors)
+    try:
+        bhajan.view_count = (bhajan.view_count or 0) + 1
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     # Only fetch columns needed for the dropdown — avoids loading full objects for all bhajans
     bhajans = (
         Bhajan.query

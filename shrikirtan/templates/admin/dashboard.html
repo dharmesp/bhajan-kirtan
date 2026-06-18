@@ -91,11 +91,12 @@
     <table class="table table-hover mb-0 align-middle" id="adminTable">
       <thead class="table-light">
         <tr>
-          <th class="ps-3">#</th>
-          <th>Gujarati Title</th>
-          <th class="d-none d-md-table-cell">English Title</th>
+          <th class="ps-3 sk-sortable" data-col="0" style="cursor:pointer;white-space:nowrap"># <i class="bi bi-chevron-expand text-muted small"></i></th>
+          <th class="sk-sortable" data-col="1" style="cursor:pointer">Gujarati Title <i class="bi bi-chevron-expand text-muted small"></i></th>
+          <th class="d-none d-md-table-cell sk-sortable" data-col="2" style="cursor:pointer">English Title <i class="bi bi-chevron-expand text-muted small"></i></th>
           <th class="d-none d-sm-table-cell">Category</th>
           <th class="d-none d-sm-table-cell text-center">Active</th>
+          <th class="d-none d-sm-table-cell text-center sk-sortable" data-col="5" style="cursor:pointer;white-space:nowrap">Views <i class="bi bi-chevron-expand text-muted small"></i></th>
           <th class="text-end pe-3">Actions</th>
         </tr>
       </thead>
@@ -125,6 +126,9 @@
             {% else %}
             <i class="bi bi-slash-circle text-secondary"></i>
             {% endif %}
+          </td>
+          <td class="d-none d-sm-table-cell text-center text-muted small" data-views="{{ b.view_count or 0 }}">
+            {{ b.view_count or 0 }}
           </td>
           <td class="text-end pe-3">
             <div class="d-flex gap-1 justify-content-end flex-wrap">
@@ -361,5 +365,35 @@ document.getElementById('deleteModal')?.addEventListener('show.bs.modal', functi
   document.getElementById('deleteModalName').textContent = name;
   document.getElementById('deleteForm').action = `/admin/bhajan/delete/${id}`;
 });
+
+// Sortable table columns
+(function () {
+  let lastCol = -1, lastAsc = true;
+  document.querySelectorAll('.sk-sortable').forEach(th => {
+    th.addEventListener('click', function () {
+      const col = parseInt(this.dataset.col);
+      const asc = (col === lastCol) ? !lastAsc : true;
+      lastCol = col; lastAsc = asc;
+
+      // Update icons
+      document.querySelectorAll('.sk-sortable i').forEach(i => {
+        i.className = 'bi bi-chevron-expand text-muted small';
+      });
+      this.querySelector('i').className = `bi bi-chevron-${asc ? 'up' : 'down'} text-primary small`;
+
+      const tbody = document.querySelector('#adminTable tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        let av = a.querySelectorAll('td')[col]?.textContent.trim() ?? '';
+        let bv = b.querySelectorAll('td')[col]?.textContent.trim() ?? '';
+        // Numeric sort for # and Views columns
+        const an = parseFloat(av), bn = parseFloat(bv);
+        if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+        return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+})();
 </script>
 {% endblock %}
