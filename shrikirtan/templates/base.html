@@ -55,11 +55,6 @@
           <i class="bi bi-gear-fill me-1"></i>Admin
         </a>
         {% endif %}
-        {% if session.get('manager_logged_in') %}
-        <a href="{{ url_for('manage.dashboard') }}" class="btn btn-sm btn-outline-light">
-          <i class="bi bi-sliders2 me-1"></i>Manage
-        </a>
-        {% endif %}
       </div>
     </div>
   </nav>
