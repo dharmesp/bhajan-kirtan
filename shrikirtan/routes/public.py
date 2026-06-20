@@ -2,7 +2,7 @@ import io
 import os
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
-from sqlalchemy import or_
+from sqlalchemy import or_, case
 from ..models import db, Bhajan, Category, Setting, Event
 import qrcode
 
@@ -39,15 +39,26 @@ def search_bhajans():
     query = Bhajan.query.filter(Bhajan.is_active == True, Bhajan.is_visible == True)
 
     if q:
-        query = query.filter(or_(
-            Bhajan.title_english.ilike(f'%{q}%'),
-            Bhajan.title_gujarati.contains(q)
-        ))
+        # Full-phrase conditions
+        phrase_en = Bhajan.title_english.ilike(f'%{q}%')
+        phrase_gu = Bhajan.title_gujarati.contains(q)
+        # Also match each individual word (helps when voice splits compound Gujarati words)
+        words = [w for w in q.split() if len(w) >= 2]
+        word_conditions = []
+        for w in words:
+            word_conditions.append(Bhajan.title_english.ilike(f'%{w}%'))
+            word_conditions.append(Bhajan.title_gujarati.contains(w))
+        query = query.filter(or_(phrase_en, phrase_gu, *word_conditions))
+        # Rank: exact phrase match (0) before partial word match (1)
+        rank = case((or_(phrase_gu, phrase_en), 0), else_=1)
+        order = [rank, Bhajan.display_order, Bhajan.id]
+    else:
+        order = [Bhajan.display_order, Bhajan.id]
 
     if cat_id and cat_id.isdigit():
         query = query.filter(Bhajan.categories.any(Category.id == int(cat_id)))
 
-    results = query.order_by(Bhajan.display_order, Bhajan.id).limit(200).all()
+    results = query.order_by(*order).limit(200).all()
     return jsonify([{
         'id':             b.id,
         'title_gujarati': b.title_gujarati,
