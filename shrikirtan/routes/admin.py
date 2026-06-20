@@ -176,6 +176,32 @@ def toggle_active(bhajan_id):
     return jsonify({'ok': True, 'is_active': bhajan.is_active})
 
 
+@admin_bp.route('/admin/category/edit/<int:cat_id>', methods=['POST'])
+@login_required
+def edit_category(cat_id):
+    cat = db.get_or_404(Category, cat_id)
+    data = request.get_json(silent=True) or {}
+    field = data.get('field')
+    value = data.get('value')
+    if field == 'name':
+        name = (value or '').strip()
+        if not name:
+            return jsonify({'error': 'empty'}), 400
+        duplicate = Category.query.filter_by(name=name).first()
+        if duplicate and duplicate.id != cat_id:
+            return jsonify({'error': 'duplicate', 'msg': f'"{name}" already exists'}), 400
+        cat.name = name
+    elif field == 'order':
+        try:
+            cat.display_order = int(value)
+        except (ValueError, TypeError):
+            return jsonify({'error': 'invalid'}), 400
+    else:
+        return jsonify({'error': 'invalid field'}), 400
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
 # ── Bhajan CRUD ───────────────────────────────────────────────────────────────
 
 @admin_bp.route('/admin/bhajan/add', methods=['GET', 'POST'])
