@@ -27,7 +27,7 @@
             style="display:none;" aria-label="Clear search">
       <i class="bi bi-x-lg"></i>
     </button>
-    <button class="btn btn-outline-secondary" id="micSearch" type="button" aria-label="Voice search">
+    <button class="btn btn-outline-secondary" id="micSearch" type="button" aria-label="Voice search" style="display:none;">
       <i class="bi bi-mic"></i>
     </button>
   </div>
@@ -255,9 +255,8 @@
   const micBtn = document.getElementById('micSearch');
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition || !window.isSecureContext) {
-    micBtn.style.display = 'none';
-  } else {
+  if (SpeechRecognition && window.isSecureContext) {
+    micBtn.style.display = '';
     const recognition = new SpeechRecognition();
     recognition.lang = 'gu-IN';
     recognition.interimResults = false;
@@ -283,6 +282,9 @@
       listening = false;
       micBtn.classList.remove('sk-mic-active');
       micBtn.querySelector('i').className = 'bi bi-mic';
+      if (statusEl.textContent === 'સાંભળી રહ્યા છીએ…') {
+        statusEl.textContent = '';
+      }
     };
 
     recognition.onresult = function (e) {
