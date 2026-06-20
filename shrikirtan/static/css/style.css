@@ -152,6 +152,33 @@ body {
   background: transparent;
 }
 
+/* ── Manager ribbon ─────────────────────────────────────────── */
+.sk-manager-ribbon {
+  background: #1e40af;
+  color: #e0e7ff;
+  height: 34px;
+  font-size: .78rem;
+  display: flex;
+  align-items: center;
+}
+.sk-ribbon-link {
+  color: #c7d2fe;
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background .15s;
+}
+.sk-ribbon-link:hover {
+  background: rgba(255,255,255,.15);
+  color: #fff;
+}
+.sk-ribbon-sep {
+  opacity: .35;
+}
+@media print {
+  .sk-manager-ribbon { display: none !important; }
+}
+
 /* ── Navbar ─────────────────────────────────────────────────── */
 .sk-navbar {
   background-color: var(--sk-navbar-bg) !important;
