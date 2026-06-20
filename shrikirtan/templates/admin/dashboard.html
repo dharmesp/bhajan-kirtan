@@ -80,6 +80,21 @@
   </div>
 
   <!-- ── Bhajan list ─────────────────────────────────────────── -->
+
+  {% if suggestion_count > 0 %}
+  <div class="alert alert-info alert-dismissible d-flex align-items-center gap-2 py-2 mb-3" role="alert">
+    <i class="bi bi-bar-chart-fill flex-shrink-0"></i>
+    <div class="flex-grow-1 small">
+      <strong>{{ suggestion_count }} bhajan{{ 's' if suggestion_count != 1 }}</strong>
+      may benefit from reordering — their view count is higher than their display position suggests.
+    </div>
+    <button type="button" class="btn btn-sm btn-info text-white text-nowrap" id="sortByViewsBtn">
+      <i class="bi bi-sort-down me-1"></i>Sort by Views
+    </button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
   <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
     <h5 class="mb-0 fw-semibold">Bhajans</h5>
     <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -114,7 +129,14 @@
         <tr class="admin-row"
             data-gu="{{ b.title_gujarati | lower }}"
             data-en="{{ b.title_english | lower }}">
-          <td class="ps-3 text-muted small">{{ b.display_order }}</td>
+          <td class="ps-3">
+            <span class="sk-order-val text-muted small"
+                  data-id="{{ b.id }}"
+                  title="Click to edit order"
+                  style="cursor:pointer;min-width:2rem;display:inline-block;">
+              {{ b.display_order }}
+            </span>
+          </td>
           <td>
             <div class="gujarati-text fw-semibold">{{ b.title_gujarati }}</div>
             <div class="text-muted small d-md-none">{{ b.title_english }}</div>
@@ -384,7 +406,6 @@ document.getElementById('deleteModal')?.addEventListener('show.bs.modal', functi
       const asc = (col === lastCol) ? !lastAsc : true;
       lastCol = col; lastAsc = asc;
 
-      // Update icons
       document.querySelectorAll('.sk-sortable i').forEach(i => {
         i.className = 'bi bi-chevron-expand text-muted small';
       });
@@ -395,7 +416,6 @@ document.getElementById('deleteModal')?.addEventListener('show.bs.modal', functi
       rows.sort((a, b) => {
         let av = a.querySelectorAll('td')[col]?.textContent.trim() ?? '';
         let bv = b.querySelectorAll('td')[col]?.textContent.trim() ?? '';
-        // Numeric sort for # and Views columns
         const an = parseFloat(av), bn = parseFloat(bv);
         if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
         return asc ? av.localeCompare(bv) : bv.localeCompare(av);
@@ -404,5 +424,62 @@ document.getElementById('deleteModal')?.addEventListener('show.bs.modal', functi
     });
   });
 })();
+
+// Inline order editing
+(function () {
+  const csrfToken = document.querySelector('meta[name=csrf-token]')?.content || '';
+
+  document.querySelectorAll('.sk-order-val').forEach(function (span) {
+    span.addEventListener('click', function () {
+      if (this.querySelector('input')) return;
+      const self    = this;
+      const id      = this.dataset.id;
+      const current = this.textContent.trim();
+
+      const inp = document.createElement('input');
+      inp.type  = 'number';
+      inp.value = current;
+      inp.className = 'form-control form-control-sm p-0 ps-1';
+      inp.style.cssText = 'width:64px;display:inline-block;font-size:.8rem;';
+
+      function restore() { self.textContent = current; }
+
+      function save() {
+        const newVal = parseInt(inp.value);
+        if (isNaN(newVal) || newVal === parseInt(current)) { restore(); return; }
+        fetch('/admin/bhajan/order/' + id, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body:    JSON.stringify({ order: newVal })
+        })
+        .then(r => r.json())
+        .then(d => { self.textContent = d.ok ? newVal : current; })
+        .catch(restore);
+      }
+
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter')  { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { restore(); }
+      });
+      inp.addEventListener('blur', save);
+
+      this.textContent = '';
+      this.appendChild(inp);
+      inp.focus();
+      inp.select();
+    });
+  });
+})();
+
+// Suggestions banner — "Sort by Views" button triggers the Views column sort
+document.getElementById('sortByViewsBtn')?.addEventListener('click', function () {
+  const viewsTh = document.querySelector('.sk-sortable[data-col="5"]');
+  if (!viewsTh) return;
+  // Click twice if currently ascending so we get descending (most viewed first)
+  viewsTh.click();
+  const icon = viewsTh.querySelector('i');
+  if (icon && icon.className.includes('up')) viewsTh.click();
+  this.closest('.alert')?.querySelector('.btn-close')?.click();
+});
 </script>
 {% endblock %}

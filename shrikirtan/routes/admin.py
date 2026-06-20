@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from flask import (
     Blueprint, render_template, redirect, url_for,
-    session, request, flash, send_file, current_app
+    session, request, flash, send_file, current_app, jsonify
 )
 from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager, Event
 import qrcode
@@ -102,7 +102,36 @@ def logout():
 def dashboard():
     bhajans = Bhajan.query.order_by(Bhajan.display_order, Bhajan.id).all()
     categories = Category.query.order_by(Category.display_order, Category.name).all()
-    return render_template('admin/dashboard.html', bhajans=bhajans, categories=categories)
+
+    # Suggest reordering: active bhajans whose order rank lags their view rank by >5 positions
+    active_with_views = [b for b in bhajans if b.is_active and (b.view_count or 0) > 0]
+    by_views = sorted(active_with_views, key=lambda b: -(b.view_count or 0))
+    view_rank = {b.id: i for i, b in enumerate(by_views)}
+    by_order = sorted(active_with_views, key=lambda b: (b.display_order, b.id))
+    order_rank = {b.id: i for i, b in enumerate(by_order)}
+    suggestion_count = sum(
+        1 for b in active_with_views
+        if order_rank.get(b.id, 0) - view_rank.get(b.id, 0) > 5
+    )
+
+    return render_template('admin/dashboard.html',
+                           bhajans=bhajans,
+                           categories=categories,
+                           suggestion_count=suggestion_count)
+
+
+@admin_bp.route('/admin/bhajan/order/<int:bhajan_id>', methods=['POST'])
+@login_required
+def update_order(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    data = request.get_json(silent=True) or {}
+    try:
+        new_order = int(data.get('order', bhajan.display_order))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'invalid'}), 400
+    bhajan.display_order = new_order
+    db.session.commit()
+    return jsonify({'ok': True, 'order': new_order})
 
 
 # ── Bhajan CRUD ───────────────────────────────────────────────────────────────
