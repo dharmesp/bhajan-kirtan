@@ -134,6 +134,45 @@ def update_order(bhajan_id):
     return jsonify({'ok': True, 'order': new_order})
 
 
+@admin_bp.route('/admin/bhajan/title/<int:bhajan_id>', methods=['POST'])
+@login_required
+def update_title(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    data = request.get_json(silent=True) or {}
+    field = data.get('field')
+    value = (data.get('value') or '').strip()
+    if not value:
+        return jsonify({'error': 'empty'}), 400
+    if field == 'gujarati':
+        bhajan.title_gujarati = value
+    elif field == 'english':
+        bhajan.title_english = value
+    else:
+        return jsonify({'error': 'invalid'}), 400
+    db.session.commit()
+    return jsonify({'ok': True, 'value': value})
+
+
+@admin_bp.route('/admin/bhajan/categories/<int:bhajan_id>', methods=['POST'])
+@login_required
+def update_categories(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    data = request.get_json(silent=True) or {}
+    cat_ids = [int(x) for x in (data.get('cat_ids') or []) if str(x).isdigit()]
+    bhajan.categories = Category.query.filter(Category.id.in_(cat_ids)).all() if cat_ids else []
+    db.session.commit()
+    return jsonify({'ok': True, 'categories': [{'id': c.id, 'name': c.name} for c in bhajan.categories]})
+
+
+@admin_bp.route('/admin/bhajan/active/<int:bhajan_id>', methods=['POST'])
+@login_required
+def toggle_active(bhajan_id):
+    bhajan = db.get_or_404(Bhajan, bhajan_id)
+    bhajan.is_active = not bhajan.is_active
+    db.session.commit()
+    return jsonify({'ok': True, 'is_active': bhajan.is_active})
+
+
 # ── Bhajan CRUD ───────────────────────────────────────────────────────────────
 
 @admin_bp.route('/admin/bhajan/add', methods=['GET', 'POST'])
