@@ -738,6 +738,17 @@ body.sk-lang-en #titleGu    { display: none !important; }
   line-height: 1.65;
   white-space: pre-wrap;
 }
+/* ── Voice search mic button ─────────────────────────────────── */
+@keyframes sk-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.45); }
+  50%       { box-shadow: 0 0 0 7px rgba(220, 53, 69, 0); }
+}
+#micSearch.sk-mic-active {
+  color: var(--bs-danger);
+  border-color: var(--bs-danger);
+  animation: sk-mic-pulse 1s ease-in-out infinite;
+}
+
 @media print {
   .sk-event-sheet { display: none !important; }
 }

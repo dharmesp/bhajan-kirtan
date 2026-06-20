@@ -27,6 +27,9 @@
             style="display:none;" aria-label="Clear search">
       <i class="bi bi-x-lg"></i>
     </button>
+    <button class="btn btn-outline-secondary" id="micSearch" type="button" aria-label="Voice search">
+      <i class="bi bi-mic"></i>
+    </button>
   </div>
   <div id="searchStatus" class="text-muted small ps-1 mb-2" style="min-height:1.2em;"></div>
 
@@ -247,6 +250,58 @@
     clearBtn.style.display = 'none';
     doSearch('');
   });
+
+  // ── Voice search ─────────────────────────────────────────────
+  const micBtn = document.getElementById('micSearch');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition || !window.isSecureContext) {
+    micBtn.style.display = 'none';
+  } else {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'gu-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 3;
+
+    let listening = false;
+
+    micBtn.addEventListener('click', function () {
+      if (listening) { recognition.stop(); return; }
+      searchInput.value = '';
+      clearBtn.style.display = 'none';
+      statusEl.textContent = 'સાંભળી રહ્યા છીએ…';
+      recognition.start();
+    });
+
+    recognition.onstart = function () {
+      listening = true;
+      micBtn.classList.add('sk-mic-active');
+      micBtn.querySelector('i').className = 'bi bi-mic-fill';
+    };
+
+    recognition.onend = function () {
+      listening = false;
+      micBtn.classList.remove('sk-mic-active');
+      micBtn.querySelector('i').className = 'bi bi-mic';
+    };
+
+    recognition.onresult = function (e) {
+      const transcript = e.results[0][0].transcript.trim();
+      searchInput.value = transcript;
+      clearBtn.style.display = '';
+      doSearch(transcript);
+    };
+
+    recognition.onerror = function (e) {
+      if (e.error === 'not-allowed') {
+        statusEl.textContent = 'Microphone access denied. Please allow it in browser settings.';
+      } else if (e.error !== 'no-speech') {
+        statusEl.textContent = 'Voice search unavailable. Try typing.';
+      } else {
+        statusEl.textContent = '';
+      }
+    };
+  }
 
   document.querySelectorAll('.cat-filter').forEach(btn => {
     btn.addEventListener('click', function () {
