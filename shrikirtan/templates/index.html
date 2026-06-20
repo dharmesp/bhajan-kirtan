@@ -253,9 +253,24 @@
 
   // ── Voice search ─────────────────────────────────────────────
   const micBtn = document.getElementById('micSearch');
+  const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (SpeechRecognition && window.isSecureContext) {
+  if (isIOS && window.isSecureContext) {
+    // iOS: focus the input so the keyboard opens — user taps the keyboard mic to dictate
+    micBtn.style.display = '';
+    micBtn.addEventListener('click', function () {
+      searchInput.focus();
+      statusEl.textContent = 'Keyboard પર mic બટન tap કરીને બોલો…';
+      setTimeout(function () {
+        if (statusEl.textContent === 'Keyboard પર mic બટન tap કરીને બોલો…') {
+          statusEl.textContent = '';
+        }
+      }, 4000);
+    });
+  } else if (SpeechRecognition && window.isSecureContext) {
+    // Android / Chrome: use Web Speech API directly
     micBtn.style.display = '';
     const recognition = new SpeechRecognition();
     recognition.lang = 'gu-IN';
