@@ -406,6 +406,17 @@
     <i class="bi bi-fonts"></i>
     <span id="tabFontLabel">a</span>
   </button>
+  {% if session.get('manager_logged_in') %}
+  <a href="{{ url_for('manage.dashboard') }}" class="sk-pub-tab" aria-label="Manager Dashboard">
+    <i class="bi bi-person-badge-fill"></i>
+    <span>Manage</span>
+  </a>
+  {% else %}
+  <a href="{{ url_for('manage.login') }}" class="sk-pub-tab" aria-label="Manager Login">
+    <i class="bi bi-person-lock"></i>
+    <span>Login</span>
+  </a>
+  {% endif %}
 </nav>
 
 <!-- QR / Share modal -->
