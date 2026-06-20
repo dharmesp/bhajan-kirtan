@@ -114,9 +114,12 @@ def dashboard():
         if order_rank.get(b.id, 0) - view_rank.get(b.id, 0) > 5
     )
 
+    categories_json = [{'id': c.id, 'name': c.name} for c in categories]
+
     return render_template('admin/dashboard.html',
                            bhajans=bhajans,
                            categories=categories,
+                           categories_json=categories_json,
                            suggestion_count=suggestion_count)
 
 

@@ -556,7 +556,7 @@ document.querySelectorAll('.sk-edit-title').forEach(function (el) {
 });
 
 // ── Inline category editing ───────────────────────────────────
-const ALL_CATS  = {{ categories | tojson }};
+const ALL_CATS  = {{ categories_json | tojson }};
 const catPopup  = document.getElementById('skCatPopup');
 let   _catCell  = null;
 
