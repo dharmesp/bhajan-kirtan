@@ -174,19 +174,19 @@
     return text.replace(re, '<mark class="sk-highlight">$1</mark>');
   }
 
-  function buildRow(item, q) {
+  function buildRow(item, q, num) {
     const a = document.createElement('a');
     a.href = item.url;
     a.dataset.id = item.id;
     a.className = 'sk-list-row text-decoration-none d-flex align-items-center gap-3 px-3 py-2';
     a.innerHTML =
       '<span class="sk-np-dot flex-shrink-0" aria-hidden="true"></span>' +
-      (item.has_audio
-        ? '<span class="sk-row-num text-muted flex-shrink-0"></span><i class="bi bi-music-note-beamed text-primary ms-1" title="Audio available"></i>'
-        : '<span class="sk-row-num text-muted flex-shrink-0"></span>') +
+      '<span class="sk-row-num text-muted flex-shrink-0">' + num +
+        (item.has_audio ? '<i class="bi bi-music-note-beamed text-primary ms-1" title="Audio available"></i>' : '') +
+      '</span>' +
       '<span class="flex-grow-1 overflow-hidden">' +
-        '<span class="gujarati-text fw-semibold d-block text-truncate">' + highlight(item.title_gujarati, q) + '</span>' +
-        '<span class="text-muted small d-block text-truncate">' + highlight(item.title_english, q) + '</span>' +
+        '<span class="gujarati-text fw-semibold d-block text-truncate sk-row-gu">' + highlight(item.title_gujarati, q) + '</span>' +
+        '<span class="text-muted d-block text-truncate sk-row-en">' + highlight(item.title_english, q) + '</span>' +
       '</span>' +
       (item.categories && item.categories.length
         ? item.categories.map(function(c) {
@@ -216,7 +216,7 @@
         statusEl.textContent = q ? 'No results for "' + q + '"' : 'No bhajans in this category.';
       } else {
         noResultsEl.style.display = 'none';
-        data.forEach(item => resultsEl.appendChild(buildRow(item, q)));
+        data.forEach((item, idx) => resultsEl.appendChild(buildRow(item, q, idx + 1)));
         markNowPlaying(currentNpId);
         statusEl.textContent = data.length + ' bhajan' + (data.length === 1 ? '' : 's')
           + (q ? ' for "' + q + '"' : ' in this category');

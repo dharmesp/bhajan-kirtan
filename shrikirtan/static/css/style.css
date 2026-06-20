@@ -495,12 +495,12 @@ mark.sk-highlight {
 
 /* ── Public tab bar (home + bhajan pages) ────────────────────── */
 body.sk-has-pub-tabbar {
-  padding-bottom: 60px;
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0));
 }
 .sk-pub-tabbar {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 60px;
+  height: calc(60px + env(safe-area-inset-bottom, 0));
   background: var(--bs-body-bg);
   border-top: 1px solid var(--bs-border-color);
   display: flex;
@@ -663,7 +663,7 @@ body.sk-lang-en #titleGu    { display: none !important; }
 /* ── Upcoming Events Bottom Sheet ───────────────────────────── */
 .sk-event-sheet {
   position: fixed;
-  bottom: 60px; /* above the 60px pub tab bar */
+  bottom: calc(60px + env(safe-area-inset-bottom, 0)); /* above the pub tab bar */
   left: 0; right: 0;
   z-index: 1020;
   border-radius: 16px 16px 0 0;
