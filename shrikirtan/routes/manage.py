@@ -23,7 +23,7 @@ def manager_login_required(f):
 @manage_bp.route('/manage/login', methods=['GET', 'POST'])
 def login():
     if session.get('manager_logged_in'):
-        return redirect(url_for('manage.dashboard'))
+        return redirect(url_for('public.index'))
     error = None
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -33,7 +33,7 @@ def login():
             session['manager_logged_in'] = True
             session['manager_username'] = username
             session.permanent = True
-            return redirect(url_for('manage.dashboard'))
+            return redirect(url_for('public.index'))
         error = 'Invalid credentials. Please try again.'
     return render_template('manage/login.html', error=error)
 
