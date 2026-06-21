@@ -1,7 +1,7 @@
 import os
 import secrets
 from datetime import timedelta
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
@@ -137,6 +137,10 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(setup_bp)
     app.register_blueprint(manage_bp)
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return redirect(url_for('public.index'))
 
     # Inject app title and helper into all templates
     @app.context_processor
