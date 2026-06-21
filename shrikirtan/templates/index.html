@@ -575,7 +575,11 @@
       )
       .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, m =>
         `<a href="mailto:${m}" class="sk-ev-link">${m}</a>`
-      );
+      )
+      .replace(/📍([^\n<]+)/g, (m, addr) => {
+        const q = encodeURIComponent(addr.trim());
+        return `📍<a href="https://maps.google.com/maps?q=${q}" target="_blank" rel="noopener noreferrer" class="sk-ev-link">${addr}</a>`;
+      });
   }
 
   // ── Load events ───────────────────────────────────────────
