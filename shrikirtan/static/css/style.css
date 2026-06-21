@@ -706,6 +706,11 @@ body.sk-lang-en #titleGu    { display: none !important; }
   line-height: 1.65;
   white-space: pre-wrap;
 }
+.sk-ev-link {
+  color: #0d6efd;
+  text-decoration: underline;
+  word-break: break-all;
+}
 /* ── Voice search mic button ─────────────────────────────────── */
 @keyframes sk-mic-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.45); }

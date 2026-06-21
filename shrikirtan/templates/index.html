@@ -537,7 +537,7 @@
 
     peekTitle.textContent = title;
     evTitle.textContent   = title;
-    evDesc.textContent    = desc;
+    evDesc.innerHTML      = linkify(desc);
 
     if (e.image_url) {
       evImg.src = e.image_url;
@@ -560,6 +560,19 @@
     evPrev.disabled = idx === 0;
     evNext.disabled = idx === evList.length - 1;
     curIdx = idx;
+  }
+
+  // ── Linkify phone numbers and URLs in event descriptions ──
+  function linkify(text) {
+    const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return esc
+      .replace(/\+\d[\d.]+\d/g, m => {
+        const tel = m.replace(/\./g, '');
+        return `<a href="tel:${tel}" class="sk-ev-link">${m}</a>`;
+      })
+      .replace(/https?:\/\/[^\s<>"]+/g, m =>
+        `<a href="${m}" target="_blank" rel="noopener noreferrer" class="sk-ev-link">${m}</a>`
+      );
   }
 
   // ── Load events ───────────────────────────────────────────
