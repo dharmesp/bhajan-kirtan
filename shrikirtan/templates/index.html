@@ -568,17 +568,17 @@
     return esc
       .replace(/\+\d[\d.]+\d/g, m => {
         const tel = m.replace(/\./g, '');
-        return `<a href="tel:${tel}" class="sk-ev-link">${m}</a>`;
+        return `<a href="tel:${tel}" class="sk-ev-chip sk-ev-chip-phone"><i class="bi bi-telephone-fill"></i>${m}</a>`;
       })
       .replace(/https?:\/\/[^\s<>"]+/g, m =>
-        `<a href="${m}" target="_blank" rel="noopener noreferrer" class="sk-ev-link">${m}</a>`
+        `<a href="${m}" target="_blank" rel="noopener noreferrer" class="sk-ev-chip sk-ev-chip-url"><i class="bi bi-globe"></i>${m}</a>`
       )
       .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, m =>
-        `<a href="mailto:${m}" class="sk-ev-link">${m}</a>`
+        `<a href="mailto:${m}" class="sk-ev-chip sk-ev-chip-email"><i class="bi bi-envelope-fill"></i>${m}</a>`
       )
-      .replace(/📍([^\n<]+)/g, (m, addr) => {
+      .replace(/📍([^\n<]+)/g, (_, addr) => {
         const q = encodeURIComponent(addr.trim());
-        return `📍<a href="https://maps.google.com/maps?q=${q}" target="_blank" rel="noopener noreferrer" class="sk-ev-link">${addr}</a>`;
+        return `<a href="https://maps.google.com/maps?q=${q}" target="_blank" rel="noopener noreferrer" class="sk-ev-chip sk-ev-chip-map"><i class="bi bi-geo-alt-fill"></i>${addr.trim()}</a>`;
       });
   }
 

@@ -706,11 +706,24 @@ body.sk-lang-en #titleGu    { display: none !important; }
   line-height: 1.65;
   white-space: pre-wrap;
 }
-.sk-ev-link {
-  color: #0d6efd;
-  text-decoration: underline;
+.sk-ev-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1.4;
   word-break: break-all;
+  margin: 2px 0;
 }
+.sk-ev-chip:hover { opacity: .85; }
+.sk-ev-chip-phone { background: #dbeafe; color: #1d4ed8; }
+.sk-ev-chip-email { background: #dcfce7; color: #15803d; }
+.sk-ev-chip-url   { background: #ede9fe; color: #6d28d9; }
+.sk-ev-chip-map   { background: #ffedd5; color: #c2410c; }
 /* ── Voice search mic button ─────────────────────────────────── */
 @keyframes sk-mic-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.45); }
