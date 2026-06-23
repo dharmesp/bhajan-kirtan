@@ -1,10 +1,14 @@
 import io
 import os
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
 from sqlalchemy import or_, case
 from ..models import db, Bhajan, Category, Setting, Event
 import qrcode
+
+def _today_pst():
+    return datetime.now(ZoneInfo('America/Los_Angeles')).date()
 
 public_bp = Blueprint('public', __name__)
 
@@ -187,7 +191,11 @@ def print_image(slot):
 
 @public_bp.route('/api/events')
 def api_events():
-    ev_list = Event.query.filter_by(is_active=True).order_by(Event.sort_order, Event.id).all()
+    today = _today_pst()
+    ev_list = Event.query.filter(
+        Event.is_active == True,
+        or_(Event.expiry_date == None, Event.expiry_date >= today)
+    ).order_by(Event.sort_order, Event.id).all()
     return jsonify([{
         'id':        e.id,
         'title_en':  e.title_en,

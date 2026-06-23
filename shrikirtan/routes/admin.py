@@ -761,8 +761,43 @@ def delete_manager(manager_id):
 @admin_bp.route('/admin/events')
 @login_required
 def events():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
     ev_list = Event.query.order_by(Event.sort_order, Event.id).all()
-    return render_template('admin/events.html', events=ev_list)
+    return render_template('admin/events.html', events=ev_list, today=today)
+
+
+@admin_bp.route('/admin/event/field/<int:event_id>', methods=['POST'])
+@login_required
+def event_field(event_id):
+    event = db.get_or_404(Event, event_id)
+    data  = request.get_json(silent=True) or {}
+    field = data.get('field')
+    value = data.get('value')
+    try:
+        if field == 'sort_order':
+            event.sort_order = int(value)
+        elif field == 'title_en':
+            event.title_en = (value or '').strip()
+        elif field == 'title_gu':
+            event.title_gu = (value or '').strip()
+        elif field == 'desc_en':
+            event.desc_en = (value or '').strip()
+        elif field == 'desc_gu':
+            event.desc_gu = (value or '').strip()
+        elif field == 'expiry_date':
+            from datetime import date
+            event.expiry_date = date.fromisoformat(value) if value else None
+        elif field == 'is_active':
+            event.is_active = bool(value)
+        else:
+            return jsonify({'ok': False, 'error': 'Unknown field'}), 400
+        db.session.commit()
+        return jsonify({'ok': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 400
 
 
 @admin_bp.route('/admin/events/add', methods=['GET', 'POST'])
@@ -778,11 +813,15 @@ def add_event():
         except ValueError:
             sort_order = 0
         is_active = request.form.get('is_active') == 'on'
+        from datetime import date as _date
+        expiry_raw = request.form.get('expiry_date', '').strip()
+        expiry_date = _date.fromisoformat(expiry_raw) if expiry_raw else None
 
         event = Event(
             title_en=title_en, title_gu=title_gu,
             desc_en=desc_en, desc_gu=desc_gu,
             sort_order=sort_order, is_active=is_active,
+            expiry_date=expiry_date,
         )
         db.session.add(event)
         db.session.flush()
@@ -819,6 +858,9 @@ def edit_event(event_id):
         except ValueError:
             event.sort_order = 0
         event.is_active = request.form.get('is_active') == 'on'
+        from datetime import date as _date
+        expiry_raw = request.form.get('expiry_date', '').strip()
+        event.expiry_date = _date.fromisoformat(expiry_raw) if expiry_raw else None
 
         f = request.files.get('image_file')
         if f and f.filename:

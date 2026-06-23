@@ -128,6 +128,17 @@ def create_app():
         except Exception:
             pass
 
+        # Add expiry_date column to events (one-time migration)
+        try:
+            insp = sa_inspect(db.engine)
+            cols = [c['name'] for c in insp.get_columns('events')]
+            if 'expiry_date' not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE events ADD COLUMN expiry_date DATE'))
+                    conn.commit()
+        except Exception:
+            pass
+
     from .routes.public import public_bp
     from .routes.admin import admin_bp
     from .routes.setup import setup_bp

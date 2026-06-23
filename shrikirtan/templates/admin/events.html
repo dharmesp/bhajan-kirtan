@@ -7,7 +7,7 @@
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div>
       <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Events</h4>
-      <small class="text-muted">Shown as bottom sheet on the home page</small>
+      <small class="text-muted">Shown as bottom sheet on the home page · Click any cell to edit inline</small>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
@@ -21,39 +21,63 @@
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
-    <div class="alert alert-{{ 'danger' if cat == 'danger' else ('warning' if cat == 'warning' else ('info' if cat == 'info' else 'success')) }} alert-dismissible fade show py-2" role="alert">
-      {{ msg }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="alert alert-{{ 'danger' if cat == 'danger' else ('warning' if cat == 'warning' else 'success') }} alert-dismissible fade show py-2" role="alert">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endfor %}
   {% endwith %}
 
   {% if events %}
   <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle" id="evTable">
       <thead class="table-light">
         <tr>
-          <th style="width:3rem;">Order</th>
-          <th>Title (EN)</th>
-          <th>Title (GU)</th>
+          <th style="width:3.5rem;">Order</th>
+          <th>Title (EN) / Desc</th>
+          <th style="width:22%;">Title (GU) / Desc</th>
           <th style="width:5rem;">Image</th>
-          <th style="width:5rem;">Active</th>
-          <th style="width:8rem;"></th>
+          <th style="width:7rem;">Expiry <small class="text-muted fw-normal">(PST)</small></th>
+          <th style="width:5.5rem;">Active</th>
+          <th style="width:5rem;"></th>
         </tr>
       </thead>
       <tbody>
         {% for ev in events %}
-        <tr>
-          <td class="text-muted small">{{ ev.sort_order }}</td>
+        <tr data-id="{{ ev.id }}">
+
+          {# ── Order ── #}
           <td>
-            <span class="fw-semibold">{{ ev.title_en or '—' }}</span>
-            {% if ev.desc_en %}
-            <br><small class="text-muted text-truncate d-block" style="max-width:260px;">{{ ev.desc_en }}</small>
-            {% endif %}
+            <span class="sk-ev-val" data-field="sort_order" data-type="number"
+                  style="cursor:pointer;" title="Click to edit">
+              {{ ev.sort_order }}
+            </span>
           </td>
+
+          {# ── Title EN + Desc EN ── #}
           <td>
-            <span class="gujarati-text">{{ ev.title_gu or '—' }}</span>
+            <div class="sk-ev-val fw-semibold" data-field="title_en" data-type="text"
+                 style="cursor:pointer;" title="Click to edit">
+              {{ ev.title_en or '—' }}
+            </div>
+            <div class="sk-ev-val text-muted small mt-1" data-field="desc_en" data-type="textarea"
+                 style="cursor:pointer;white-space:pre-wrap;max-width:280px;" title="Click to edit description">
+              {{ ev.desc_en or '' }}
+            </div>
           </td>
+
+          {# ── Title GU + Desc GU ── #}
+          <td>
+            <div class="sk-ev-val gujarati-text fw-semibold" data-field="title_gu" data-type="text"
+                 style="cursor:pointer;" title="Click to edit">
+              {{ ev.title_gu or '—' }}
+            </div>
+            <div class="sk-ev-val gujarati-text text-muted small mt-1" data-field="desc_gu" data-type="textarea"
+                 style="cursor:pointer;white-space:pre-wrap;" title="Click to edit description">
+              {{ ev.desc_gu or '' }}
+            </div>
+          </td>
+
+          {# ── Image ── #}
           <td>
             {% if ev.image_filename %}
             <img src="{{ url_for('public.event_image', event_id=ev.id) }}"
@@ -62,17 +86,41 @@
             <span class="text-muted small">None</span>
             {% endif %}
           </td>
+
+          {# ── Expiry Date ── #}
           <td>
-            {% if ev.is_active %}
-            <span class="badge bg-success">Active</span>
-            {% else %}
-            <span class="badge bg-secondary">Hidden</span>
-            {% endif %}
+            <span class="sk-ev-val sk-ev-expiry" data-field="expiry_date" data-type="date"
+                  style="cursor:pointer;" title="Click to set expiry date"
+                  data-value="{{ ev.expiry_date.isoformat() if ev.expiry_date else '' }}">
+              {% if ev.expiry_date %}
+                {% if ev.expiry_date < today %}
+                  <span class="badge bg-danger">Expired</span>
+                {% elif ev.expiry_date == today %}
+                  <span class="badge bg-warning text-dark">Today</span>
+                {% else %}
+                  <span class="badge bg-light text-secondary border">{{ ev.expiry_date.strftime('%b %d') }}</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </span>
           </td>
+
+          {# ── Active toggle ── #}
+          <td>
+            <button class="btn btn-sm sk-ev-toggle-active
+                           {{ 'btn-success' if ev.is_active else 'btn-outline-secondary' }}"
+                    data-active="{{ 'true' if ev.is_active else 'false' }}"
+                    title="Toggle visibility">
+              {{ 'Active' if ev.is_active else 'Hidden' }}
+            </button>
+          </td>
+
+          {# ── Actions ── #}
           <td>
             <div class="d-flex gap-1">
               <a href="{{ url_for('admin.edit_event', event_id=ev.id) }}"
-                 class="btn btn-outline-primary btn-sm" title="Edit">
+                 class="btn btn-outline-primary btn-sm" title="Full edit (image etc.)">
                 <i class="bi bi-pencil"></i>
               </a>
               <form method="post"
@@ -101,4 +149,109 @@
   {% endif %}
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
+function _post(url, body) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+    body: JSON.stringify(body)
+  }).then(r => r.json());
+}
+
+function flashRow(tr, ok) {
+  tr.style.transition = 'background .25s';
+  tr.style.background = ok ? '#d1fae5' : '#fee2e2';
+  setTimeout(() => { tr.style.background = ''; }, 800);
+}
+
+// ── Inline edit for text / number / date / textarea ──────────────
+document.querySelectorAll('.sk-ev-val').forEach(cell => {
+  cell.addEventListener('click', function () {
+    if (this.querySelector('input,textarea')) return; // already editing
+    const tr    = this.closest('tr');
+    const id    = tr.dataset.id;
+    const field = this.dataset.field;
+    const type  = this.dataset.type;
+    const orig  = (this.dataset.value !== undefined ? this.dataset.value : this.textContent).trim();
+
+    // Strip any badge HTML for display
+    const origText = this.dataset.value !== undefined ? this.dataset.value : this.innerText.trim();
+
+    let input;
+    if (type === 'textarea') {
+      input = document.createElement('textarea');
+      input.className = 'form-control form-control-sm';
+      input.rows = 3;
+      input.value = origText;
+    } else {
+      input = document.createElement('input');
+      input.className = 'form-control form-control-sm';
+      input.type  = type === 'number' ? 'number' : type === 'date' ? 'date' : 'text';
+      input.value = origText;
+      if (type === 'number') { input.min = 0; input.max = 9999; input.style.width = '5rem'; }
+    }
+
+    const prev = this.innerHTML;
+    this.innerHTML = '';
+    this.appendChild(input);
+    input.focus();
+
+    const save = () => {
+      const val = input.value.trim();
+      _post(`/admin/event/field/${id}`, { field, value: val })
+        .then(r => {
+          if (r.ok) {
+            if (type === 'date') {
+              this.dataset.value = val;
+              this.innerHTML = val
+                ? `<span class="badge bg-light text-secondary border">${val}</span>`
+                : '<span class="text-muted small">—</span>';
+            } else {
+              this.textContent = val || '—';
+            }
+            flashRow(tr, true);
+          } else {
+            this.innerHTML = prev;
+            flashRow(tr, false);
+          }
+        })
+        .catch(() => { this.innerHTML = prev; });
+    };
+
+    const cancel = () => { this.innerHTML = prev; };
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && type !== 'textarea') { e.preventDefault(); save(); }
+      if (e.key === 'Escape') cancel();
+    });
+    input.addEventListener('blur', save);
+  });
+});
+
+// ── Active toggle ─────────────────────────────────────────────────
+document.querySelectorAll('.sk-ev-toggle-active').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const tr      = this.closest('tr');
+    const id      = tr.dataset.id;
+    const current = this.dataset.active === 'true';
+    const next    = !current;
+    _post(`/admin/event/field/${id}`, { field: 'is_active', value: next })
+      .then(r => {
+        if (r.ok) {
+          this.dataset.active = next ? 'true' : 'false';
+          this.textContent    = next ? 'Active' : 'Hidden';
+          this.className      = `btn btn-sm sk-ev-toggle-active ${next ? 'btn-success' : 'btn-outline-secondary'}`;
+          flashRow(tr, true);
+        } else {
+          flashRow(tr, false);
+        }
+      });
+  });
+});
+</script>
 {% endblock %}

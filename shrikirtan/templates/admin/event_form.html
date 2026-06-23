@@ -73,13 +73,19 @@
     </div>
 
     <div class="row g-3 mb-4">
-      <div class="col-6">
+      <div class="col-6 col-md-3">
         <label class="form-label">Sort Order</label>
         <input type="number" name="sort_order" class="form-control"
                value="{{ event.sort_order if event else 0 }}" min="0" max="9999" />
-        <div class="form-text">Lower number = shown first.</div>
+        <div class="form-text">Lower = shown first.</div>
       </div>
-      <div class="col-6 d-flex align-items-end pb-1">
+      <div class="col-6 col-md-4">
+        <label class="form-label">Expiry Date <span class="text-muted fw-normal">(PST)</span></label>
+        <input type="date" name="expiry_date" class="form-control"
+               value="{{ event.expiry_date.isoformat() if event and event.expiry_date else '' }}" />
+        <div class="form-text">Auto-hides at end of this day (PST). Leave blank = no expiry.</div>
+      </div>
+      <div class="col-12 col-md-5 d-flex align-items-end pb-1">
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" name="is_active" id="chkActive"
                  {% if event is none or event.is_active %}checked{% endif %} />

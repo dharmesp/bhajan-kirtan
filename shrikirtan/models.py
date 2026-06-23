@@ -116,6 +116,7 @@ class Event(db.Model):
     image_filename = db.Column(db.String(200), nullable=True)
     sort_order     = db.Column(db.Integer, default=0)
     is_active      = db.Column(db.Boolean, default=True, nullable=False)
+    expiry_date    = db.Column(db.Date, nullable=True)
     created_at     = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
