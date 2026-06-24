@@ -144,6 +144,11 @@
       <button id="evPrev" class="btn btn-sm btn-outline-secondary" aria-label="Previous event">
         <i class="bi bi-chevron-left"></i> Prev
       </button>
+      <div id="evCalWrap" style="display:none;">
+        <a id="evCalBtn" href="#" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">
+          <i class="bi bi-calendar-plus me-1"></i>Add to Calendar
+        </a>
+      </div>
       <button id="evNext" class="btn btn-sm btn-outline-secondary" aria-label="Next event">
         Next <i class="bi bi-chevron-right"></i>
       </button>
@@ -511,6 +516,8 @@
   const evImg     = document.getElementById('evImg');
   const evTitle   = document.getElementById('evTitle');
   const evDesc    = document.getElementById('evDesc');
+  const evCalWrap = document.getElementById('evCalWrap');
+  const evCalBtn  = document.getElementById('evCalBtn');
   const evNav     = document.getElementById('evNav');
   const evPrev    = document.getElementById('evPrev');
   const evNext    = document.getElementById('evNext');
@@ -538,6 +545,37 @@
     peekTitle.textContent = title;
     evTitle.textContent   = title;
     evDesc.innerHTML      = linkify(desc);
+
+    if (e.expiry_date) {
+      const lang    = getLang();
+      const title   = (lang === 'en' ? e.title_en : e.title_gu) || e.title_en || e.title_gu || '';
+      const descRaw = e.desc_en || '';  // always use EN for calendar (parseable)
+      const d     = e.expiry_date.replace(/-/g, '');
+      const dNext = (function () {
+        const dt = new Date(e.expiry_date);
+        dt.setDate(dt.getDate() + 1);
+        return dt.toISOString().slice(0, 10).replace(/-/g, '');
+      })();
+
+      // Extract 📍 address line for location field
+      const addrMatch = descRaw.match(/📍([^\n]+)/);
+      const location  = addrMatch ? addrMatch[1].trim() : '';
+
+      // Strip 📍 lines from description so they don't duplicate
+      const details = descRaw.replace(/📍[^\n]*/g, '').trim();
+
+      const params = new URLSearchParams({
+        action:  'TEMPLATE',
+        text:    title,
+        dates:   d + '/' + dNext,
+        details: details,
+      });
+      if (location) params.set('location', location);
+      evCalBtn.href = 'https://calendar.google.com/calendar/render?' + params.toString();
+      evCalWrap.style.display = '';
+    } else {
+      evCalWrap.style.display = 'none';
+    }
 
     if (e.image_url) {
       evImg.src = e.image_url;

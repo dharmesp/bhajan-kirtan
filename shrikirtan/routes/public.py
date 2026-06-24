@@ -197,12 +197,13 @@ def api_events():
         or_(Event.expiry_date == None, Event.expiry_date >= today)
     ).order_by(Event.sort_order, Event.id).all()
     return jsonify([{
-        'id':        e.id,
-        'title_en':  e.title_en,
-        'title_gu':  e.title_gu,
-        'desc_en':   e.desc_en,
-        'desc_gu':   e.desc_gu,
-        'image_url': f'/event-image/{e.id}' if e.image_filename else None,
+        'id':          e.id,
+        'title_en':    e.title_en,
+        'title_gu':    e.title_gu,
+        'desc_en':     e.desc_en,
+        'desc_gu':     e.desc_gu,
+        'image_url':   f'/event-image/{e.id}' if e.image_filename else None,
+        'expiry_date': e.expiry_date.isoformat() if e.expiry_date else None,
     } for e in ev_list])
 
 
