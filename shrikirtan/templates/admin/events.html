@@ -7,9 +7,9 @@
   <table class="table table-hover align-middle">
     <thead class="table-light">
       <tr>
-        <th style="width:3.5rem;">Order</th>
-        <th>Title (EN) / Desc</th>
-        <th style="width:22%;">Title (GU) / Desc</th>
+        <th style="width:3rem;">#</th>
+        <th>Title (EN)</th>
+        <th style="width:24%;">Title (GU)</th>
         <th style="width:5rem;">Image</th>
         <th style="width:7rem;">Expiry <small class="text-muted fw-normal">(PST)</small></th>
         <th style="width:5.5rem;">Active</th>
@@ -28,15 +28,17 @@
         <td>
           <div class="sk-ev-val fw-semibold" data-field="title_en" data-type="text"
                style="cursor:pointer;" title="Click to edit">{{ ev.title_en or '—' }}</div>
-          <div class="sk-ev-val text-muted small mt-1" data-field="desc_en" data-type="textarea"
-               style="cursor:pointer;white-space:pre-wrap;max-width:280px;" title="Click to edit">{{ ev.desc_en or '' }}</div>
+          {% if ev.desc_en %}
+          <div class="text-muted small text-truncate mt-1" style="max-width:320px;">{{ ev.desc_en[:80] }}{% if ev.desc_en|length > 80 %}…{% endif %}</div>
+          {% endif %}
         </td>
 
         <td>
           <div class="sk-ev-val gujarati-text fw-semibold" data-field="title_gu" data-type="text"
                style="cursor:pointer;" title="Click to edit">{{ ev.title_gu or '—' }}</div>
-          <div class="sk-ev-val gujarati-text text-muted small mt-1" data-field="desc_gu" data-type="textarea"
-               style="cursor:pointer;white-space:pre-wrap;" title="Click to edit">{{ ev.desc_gu or '' }}</div>
+          {% if ev.desc_gu %}
+          <div class="gujarati-text text-muted small text-truncate mt-1" style="max-width:240px;">{{ ev.desc_gu[:60] }}{% if ev.desc_gu|length > 60 %}…{% endif %}</div>
+          {% endif %}
         </td>
 
         <td>
