@@ -2,65 +2,7 @@
 {% block title %}Events — Admin{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3 px-3">
-
-  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-    <div>
-      <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Events</h4>
-      <small class="text-muted">Sorted by expiry date · Click any cell to edit inline</small>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-      <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add Event
-      </a>
-      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Dashboard
-      </a>
-    </div>
-  </div>
-
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-    <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' }} alert-dismissible fade show py-2" role="alert">
-      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-  {% endwith %}
-
-  {# ── Upcoming events ── #}
-  {% if upcoming %}
-  {{ _render_table(upcoming, today) }}
-  {% else %}
-  <div class="text-center text-muted py-4">
-    <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
-    <p class="mb-3">No upcoming events.</p>
-    <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-lg me-1"></i>Add First Event
-    </a>
-  </div>
-  {% endif %}
-
-  {# ── Expired events (collapsed) ── #}
-  {% if expired %}
-  <div class="mt-4">
-    <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 mb-2"
-            type="button" data-bs-toggle="collapse" data-bs-target="#expiredSection" aria-expanded="false">
-      <i class="bi bi-clock-history"></i>
-      Expired Events ({{ expired|length }})
-      <i class="bi bi-chevron-down"></i>
-    </button>
-    <div class="collapse" id="expiredSection">
-      <div class="opacity-60">
-        {{ _render_table(expired, today) }}
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-</div>
-
-{# ── Reusable table macro ── #}
-{% macro _render_table(ev_list, today) %}
+{% macro render_table(ev_list, today) %}
 <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead class="table-light">
@@ -153,6 +95,62 @@
 </div>
 {% endmacro %}
 
+<div class="container-fluid py-3 px-3">
+
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+      <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Events</h4>
+      <small class="text-muted">Sorted by expiry date · Click any cell to edit inline</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Add Event
+      </a>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Dashboard
+      </a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' }} alert-dismissible fade show py-2" role="alert">
+      {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  {# ── Upcoming ── #}
+  {% if upcoming %}
+    {{ render_table(upcoming, today) }}
+  {% else %}
+  <div class="text-center text-muted py-4">
+    <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
+    <p class="mb-3">No upcoming events.</p>
+    <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Add First Event
+    </a>
+  </div>
+  {% endif %}
+
+  {# ── Expired (collapsed) ── #}
+  {% if expired %}
+  <div class="mt-4">
+    <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 mb-2"
+            type="button" data-bs-toggle="collapse" data-bs-target="#expiredSection" aria-expanded="false">
+      <i class="bi bi-clock-history"></i>
+      Expired Events ({{ expired|length }})
+      <i class="bi bi-chevron-down"></i>
+    </button>
+    <div class="collapse" id="expiredSection">
+      <div style="opacity:.65;">
+        {{ render_table(expired, today) }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
 {% endblock %}
 
 {% block scripts %}
