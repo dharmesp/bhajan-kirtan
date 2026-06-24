@@ -7,7 +7,7 @@
   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div>
       <h4 class="fw-bold mb-0"><i class="bi bi-calendar-event me-2 text-warning"></i>Upcoming Events</h4>
-      <small class="text-muted">Shown as bottom sheet on the home page · Click any cell to edit inline</small>
+      <small class="text-muted">Sorted by expiry date · Click any cell to edit inline</small>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
@@ -21,134 +21,138 @@
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
-    <div class="alert alert-{{ 'danger' if cat == 'danger' else ('warning' if cat == 'warning' else 'success') }} alert-dismissible fade show py-2" role="alert">
+    <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' }} alert-dismissible fade show py-2" role="alert">
       {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endfor %}
   {% endwith %}
 
-  {% if events %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle" id="evTable">
-      <thead class="table-light">
-        <tr>
-          <th style="width:3.5rem;">Order</th>
-          <th>Title (EN) / Desc</th>
-          <th style="width:22%;">Title (GU) / Desc</th>
-          <th style="width:5rem;">Image</th>
-          <th style="width:7rem;">Expiry <small class="text-muted fw-normal">(PST)</small></th>
-          <th style="width:5.5rem;">Active</th>
-          <th style="width:5rem;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ev in events %}
-        <tr data-id="{{ ev.id }}">
-
-          {# ── Order ── #}
-          <td>
-            <span class="sk-ev-val" data-field="sort_order" data-type="number"
-                  style="cursor:pointer;" title="Click to edit">
-              {{ ev.sort_order }}
-            </span>
-          </td>
-
-          {# ── Title EN + Desc EN ── #}
-          <td>
-            <div class="sk-ev-val fw-semibold" data-field="title_en" data-type="text"
-                 style="cursor:pointer;" title="Click to edit">
-              {{ ev.title_en or '—' }}
-            </div>
-            <div class="sk-ev-val text-muted small mt-1" data-field="desc_en" data-type="textarea"
-                 style="cursor:pointer;white-space:pre-wrap;max-width:280px;" title="Click to edit description">
-              {{ ev.desc_en or '' }}
-            </div>
-          </td>
-
-          {# ── Title GU + Desc GU ── #}
-          <td>
-            <div class="sk-ev-val gujarati-text fw-semibold" data-field="title_gu" data-type="text"
-                 style="cursor:pointer;" title="Click to edit">
-              {{ ev.title_gu or '—' }}
-            </div>
-            <div class="sk-ev-val gujarati-text text-muted small mt-1" data-field="desc_gu" data-type="textarea"
-                 style="cursor:pointer;white-space:pre-wrap;" title="Click to edit description">
-              {{ ev.desc_gu or '' }}
-            </div>
-          </td>
-
-          {# ── Image ── #}
-          <td>
-            {% if ev.image_filename %}
-            <img src="{{ url_for('public.event_image', event_id=ev.id) }}"
-                 alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--bs-border-color);" />
-            {% else %}
-            <span class="text-muted small">None</span>
-            {% endif %}
-          </td>
-
-          {# ── Expiry Date ── #}
-          <td>
-            <span class="sk-ev-val sk-ev-expiry" data-field="expiry_date" data-type="date"
-                  style="cursor:pointer;" title="Click to set expiry date"
-                  data-value="{{ ev.expiry_date.isoformat() if ev.expiry_date else '' }}">
-              {% if ev.expiry_date %}
-                {% if ev.expiry_date < today %}
-                  <span class="badge bg-danger">Expired</span>
-                {% elif ev.expiry_date == today %}
-                  <span class="badge bg-warning text-dark">Today</span>
-                {% else %}
-                  <span class="badge bg-light text-secondary border">{{ ev.expiry_date.strftime('%b %d') }}</span>
-                {% endif %}
-              {% else %}
-                <span class="text-muted small">—</span>
-              {% endif %}
-            </span>
-          </td>
-
-          {# ── Active toggle ── #}
-          <td>
-            <button class="btn btn-sm sk-ev-toggle-active
-                           {{ 'btn-success' if ev.is_active else 'btn-outline-secondary' }}"
-                    data-active="{{ 'true' if ev.is_active else 'false' }}"
-                    title="Toggle visibility">
-              {{ 'Active' if ev.is_active else 'Hidden' }}
-            </button>
-          </td>
-
-          {# ── Actions ── #}
-          <td>
-            <div class="d-flex gap-1">
-              <a href="{{ url_for('admin.edit_event', event_id=ev.id) }}"
-                 class="btn btn-outline-primary btn-sm" title="Full edit (image etc.)">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <form method="post"
-                    action="{{ url_for('admin.delete_event', event_id=ev.id) }}"
-                    onsubmit="return confirm('Delete this event?');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {# ── Upcoming events ── #}
+  {% if upcoming %}
+  {{ _render_table(upcoming, today) }}
   {% else %}
-  <div class="text-center text-muted py-5">
+  <div class="text-center text-muted py-4">
     <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
-    <p class="mb-3">No events yet.</p>
+    <p class="mb-3">No upcoming events.</p>
     <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
       <i class="bi bi-plus-lg me-1"></i>Add First Event
     </a>
   </div>
   {% endif %}
 
+  {# ── Expired events (collapsed) ── #}
+  {% if expired %}
+  <div class="mt-4">
+    <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 mb-2"
+            type="button" data-bs-toggle="collapse" data-bs-target="#expiredSection" aria-expanded="false">
+      <i class="bi bi-clock-history"></i>
+      Expired Events ({{ expired|length }})
+      <i class="bi bi-chevron-down"></i>
+    </button>
+    <div class="collapse" id="expiredSection">
+      <div class="opacity-60">
+        {{ _render_table(expired, today) }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
+
+{# ── Reusable table macro ── #}
+{% macro _render_table(ev_list, today) %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th style="width:3.5rem;">Order</th>
+        <th>Title (EN) / Desc</th>
+        <th style="width:22%;">Title (GU) / Desc</th>
+        <th style="width:5rem;">Image</th>
+        <th style="width:7rem;">Expiry <small class="text-muted fw-normal">(PST)</small></th>
+        <th style="width:5.5rem;">Active</th>
+        <th style="width:5rem;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ev in ev_list %}
+      <tr data-id="{{ ev.id }}">
+
+        <td>
+          <span class="sk-ev-val" data-field="sort_order" data-type="number"
+                style="cursor:pointer;" title="Click to edit">{{ ev.sort_order }}</span>
+        </td>
+
+        <td>
+          <div class="sk-ev-val fw-semibold" data-field="title_en" data-type="text"
+               style="cursor:pointer;" title="Click to edit">{{ ev.title_en or '—' }}</div>
+          <div class="sk-ev-val text-muted small mt-1" data-field="desc_en" data-type="textarea"
+               style="cursor:pointer;white-space:pre-wrap;max-width:280px;" title="Click to edit">{{ ev.desc_en or '' }}</div>
+        </td>
+
+        <td>
+          <div class="sk-ev-val gujarati-text fw-semibold" data-field="title_gu" data-type="text"
+               style="cursor:pointer;" title="Click to edit">{{ ev.title_gu or '—' }}</div>
+          <div class="sk-ev-val gujarati-text text-muted small mt-1" data-field="desc_gu" data-type="textarea"
+               style="cursor:pointer;white-space:pre-wrap;" title="Click to edit">{{ ev.desc_gu or '' }}</div>
+        </td>
+
+        <td>
+          {% if ev.image_filename %}
+          <img src="{{ url_for('public.event_image', event_id=ev.id) }}"
+               alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--bs-border-color);" />
+          {% else %}
+          <span class="text-muted small">None</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <span class="sk-ev-val sk-ev-expiry" data-field="expiry_date" data-type="date"
+                style="cursor:pointer;" title="Click to set expiry"
+                data-value="{{ ev.expiry_date.isoformat() if ev.expiry_date else '' }}">
+            {% if ev.expiry_date %}
+              {% if ev.expiry_date < today %}
+                <span class="badge bg-danger">{{ ev.expiry_date.strftime('%b %d') }}</span>
+              {% elif ev.expiry_date == today %}
+                <span class="badge bg-warning text-dark">Today</span>
+              {% else %}
+                <span class="badge bg-light text-secondary border">{{ ev.expiry_date.strftime('%b %d') }}</span>
+              {% endif %}
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </span>
+        </td>
+
+        <td>
+          <button class="btn btn-sm sk-ev-toggle-active {{ 'btn-success' if ev.is_active else 'btn-outline-secondary' }}"
+                  data-active="{{ 'true' if ev.is_active else 'false' }}" title="Toggle visibility">
+            {{ 'Active' if ev.is_active else 'Hidden' }}
+          </button>
+        </td>
+
+        <td>
+          <div class="d-flex gap-1">
+            <a href="{{ url_for('admin.edit_event', event_id=ev.id) }}"
+               class="btn btn-outline-primary btn-sm" title="Full edit (image etc.)">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="{{ url_for('admin.delete_event', event_id=ev.id) }}"
+                  onsubmit="return confirm('Delete this event?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
 {% endblock %}
 
 {% block scripts %}
@@ -169,34 +173,28 @@ function flashRow(tr, ok) {
   setTimeout(() => { tr.style.background = ''; }, 800);
 }
 
-// ── Inline edit for text / number / date / textarea ──────────────
 document.querySelectorAll('.sk-ev-val').forEach(cell => {
   cell.addEventListener('click', function () {
-    if (this.querySelector('input,textarea')) return; // already editing
+    if (this.querySelector('input,textarea')) return;
     const tr    = this.closest('tr');
     const id    = tr.dataset.id;
     const field = this.dataset.field;
     const type  = this.dataset.type;
-    const orig  = (this.dataset.value !== undefined ? this.dataset.value : this.textContent).trim();
-
-    // Strip any badge HTML for display
-    const origText = this.dataset.value !== undefined ? this.dataset.value : this.innerText.trim();
+    const orig  = this.dataset.value !== undefined ? this.dataset.value : this.innerText.trim();
+    const prev  = this.innerHTML;
 
     let input;
     if (type === 'textarea') {
       input = document.createElement('textarea');
       input.className = 'form-control form-control-sm';
       input.rows = 3;
-      input.value = origText;
     } else {
       input = document.createElement('input');
       input.className = 'form-control form-control-sm';
-      input.type  = type === 'number' ? 'number' : type === 'date' ? 'date' : 'text';
-      input.value = origText;
+      input.type = type === 'number' ? 'number' : type === 'date' ? 'date' : 'text';
       if (type === 'number') { input.min = 0; input.max = 9999; input.style.width = '5rem'; }
     }
-
-    const prev = this.innerHTML;
+    input.value = orig;
     this.innerHTML = '';
     this.appendChild(input);
     input.focus();
@@ -223,23 +221,19 @@ document.querySelectorAll('.sk-ev-val').forEach(cell => {
         .catch(() => { this.innerHTML = prev; });
     };
 
-    const cancel = () => { this.innerHTML = prev; };
-
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && type !== 'textarea') { e.preventDefault(); save(); }
-      if (e.key === 'Escape') cancel();
+      if (e.key === 'Escape') { this.innerHTML = prev; }
     });
     input.addEventListener('blur', save);
   });
 });
 
-// ── Active toggle ─────────────────────────────────────────────────
 document.querySelectorAll('.sk-ev-toggle-active').forEach(btn => {
   btn.addEventListener('click', function () {
-    const tr      = this.closest('tr');
-    const id      = tr.dataset.id;
-    const current = this.dataset.active === 'true';
-    const next    = !current;
+    const tr   = this.closest('tr');
+    const id   = tr.dataset.id;
+    const next = this.dataset.active !== 'true';
     _post(`/admin/event/field/${id}`, { field: 'is_active', value: next })
       .then(r => {
         if (r.ok) {
@@ -247,9 +241,7 @@ document.querySelectorAll('.sk-ev-toggle-active').forEach(btn => {
           this.textContent    = next ? 'Active' : 'Hidden';
           this.className      = `btn btn-sm sk-ev-toggle-active ${next ? 'btn-success' : 'btn-outline-secondary'}`;
           flashRow(tr, true);
-        } else {
-          flashRow(tr, false);
-        }
+        } else { flashRow(tr, false); }
       });
   });
 });

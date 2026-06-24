@@ -763,9 +763,17 @@ def delete_manager(manager_id):
 def events():
     from datetime import datetime
     from zoneinfo import ZoneInfo
+    from sqlalchemy import nullslast
     today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
-    ev_list = Event.query.order_by(Event.sort_order, Event.id).all()
-    return render_template('admin/events.html', events=ev_list, today=today)
+    from sqlalchemy import or_
+    upcoming = Event.query.filter(
+        or_(Event.expiry_date == None, Event.expiry_date >= today)
+    ).order_by(nullslast(Event.expiry_date.asc()), Event.sort_order, Event.id).all()
+    expired = Event.query.filter(
+        Event.expiry_date != None,
+        Event.expiry_date < today
+    ).order_by(Event.expiry_date.desc()).all()
+    return render_template('admin/events.html', upcoming=upcoming, expired=expired, today=today)
 
 
 @admin_bp.route('/admin/event/field/<int:event_id>', methods=['POST'])
