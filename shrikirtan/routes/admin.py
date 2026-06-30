@@ -1,3 +1,4 @@
+import csv
 import io
 import json as json_module
 import os
@@ -930,6 +931,87 @@ def copy_event(event_id):
     db.session.add(copy)
     db.session.commit()
     flash(f'Event "{copy.title_en or copy.title_gu}" copied.', 'success')
+    return redirect(url_for('admin.events'))
+
+
+@admin_bp.route('/admin/events/sample-csv')
+@login_required
+def sample_events_csv():
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(['title_en', 'title_gu', 'desc_en', 'desc_gu', 'expiry_date'])
+    writer.writerow([
+        'Janmashtami Celebration', 'જન્માષ્ટમી ઉજવણી',
+        "Join us for the celebration of Lord Krishna's birth.",
+        'ભગવાન કૃષ્ણના જન્મની ઉજવણીમાં જોડાઓ.',
+        '2026-09-04',
+    ])
+    writer.writerow([
+        'Diwali Program', 'દિવાળી કાર્યક્રમ',
+        'Annual Diwali program with bhajans and prasad.',
+        'ભજન અને પ્રસાદ સાથે વાર્ષિક દિવાળી કાર્યક્રમ.',
+        '2026-11-08',
+    ])
+    # UTF-8 BOM so Excel renders Gujarati text correctly when the file is opened directly
+    data = buf.getvalue().encode('utf-8-sig')
+    return send_file(io.BytesIO(data), mimetype='text/csv',
+                     as_attachment=True, download_name='shrikirtan_events_sample.csv')
+
+
+@admin_bp.route('/admin/events/import-csv', methods=['POST'])
+@login_required
+def import_events_csv():
+    f = request.files.get('import_csv')
+    if not f or not f.filename.lower().endswith('.csv'):
+        flash('Please upload a valid .csv file.', 'danger')
+        return redirect(url_for('admin.events'))
+
+    try:
+        raw = f.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        flash('Could not read file — please save it as UTF-8 CSV.', 'danger')
+        return redirect(url_for('admin.events'))
+
+    reader = csv.DictReader(io.StringIO(raw))
+    fieldnames = {(name or '').strip() for name in (reader.fieldnames or [])}
+    if not {'title_en', 'title_gu'}.issubset(fieldnames):
+        flash('CSV must include at least "title_en" and "title_gu" columns.', 'danger')
+        return redirect(url_for('admin.events'))
+
+    from datetime import date as _date
+    max_order = db.session.query(db.func.max(Event.sort_order)).scalar() or 0
+    added = skipped = 0
+    for row in reader:
+        title_en = (row.get('title_en') or '').strip()
+        title_gu = (row.get('title_gu') or '').strip()
+        if not title_en and not title_gu:
+            skipped += 1
+            continue
+
+        expiry_raw = (row.get('expiry_date') or '').strip()
+        expiry_date = None
+        if expiry_raw:
+            try:
+                expiry_date = _date.fromisoformat(expiry_raw)
+            except ValueError:
+                skipped += 1
+                continue
+
+        max_order += 1
+        db.session.add(Event(
+            title_en=title_en, title_gu=title_gu,
+            desc_en=(row.get('desc_en') or '').strip(),
+            desc_gu=(row.get('desc_gu') or '').strip(),
+            expiry_date=expiry_date, sort_order=max_order,
+            is_active=True,
+        ))
+        added += 1
+
+    db.session.commit()
+    parts = [f'{added} event{"" if added == 1 else "s"} added']
+    if skipped:
+        parts.append(f'{skipped} skipped (missing title or invalid date)')
+    flash('CSV import complete — ' + ', '.join(parts) + '.', 'success')
     return redirect(url_for('admin.events'))
 
 

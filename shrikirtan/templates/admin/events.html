@@ -114,6 +114,10 @@
       <a href="{{ url_for('admin.add_event') }}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-lg me-1"></i>Add Event
       </a>
+      <button type="button" class="btn btn-outline-success btn-sm"
+              data-bs-toggle="modal" data-bs-target="#importEventsCsvModal">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Import CSV
+      </button>
       <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Dashboard
       </a>
@@ -158,6 +162,45 @@
   </div>
   {% endif %}
 
+</div>
+
+<!-- Import Events CSV modal -->
+<div class="modal fade" id="importEventsCsvModal" tabindex="-1" aria-labelledby="importEventsCsvModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="importEventsCsvModalLabel">
+          <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Import Events from CSV
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.import_events_csv') }}"
+            enctype="multipart/form-data" id="importEventsCsvForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="modal-body">
+          <p class="text-muted small mb-2">
+            Columns: <code>title_en</code>, <code>title_gu</code>, <code>desc_en</code>,
+            <code>desc_gu</code>, <code>expiry_date</code> (format <code>YYYY-MM-DD</code>, optional).
+            Each row becomes a new event.
+          </p>
+          <a href="{{ url_for('admin.sample_events_csv') }}" class="small d-inline-block mb-3">
+            <i class="bi bi-download me-1"></i>Download sample CSV
+          </a>
+          <div class="mb-3">
+            <label for="importEventsCsvInput" class="form-label fw-semibold">Select CSV file</label>
+            <input class="form-control" type="file" id="importEventsCsvInput"
+                   name="import_csv" accept=".csv" required />
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success" id="importEventsCsvSubmitBtn">
+            <i class="bi bi-upload me-1"></i>Import
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -250,6 +293,12 @@ document.querySelectorAll('.sk-ev-toggle-active').forEach(btn => {
         } else { flashRow(tr, false); }
       });
   });
+});
+
+document.getElementById('importEventsCsvForm')?.addEventListener('submit', function () {
+  const btn = document.getElementById('importEventsCsvSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importing…';
 });
 </script>
 {% endblock %}
