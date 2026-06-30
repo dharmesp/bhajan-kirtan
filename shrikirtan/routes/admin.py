@@ -903,6 +903,36 @@ def edit_event(event_id):
     return render_template('admin/event_form.html', event=event, action='Edit')
 
 
+@admin_bp.route('/admin/events/copy/<int:event_id>', methods=['POST'])
+@login_required
+def copy_event(event_id):
+    src = db.get_or_404(Event, event_id)
+
+    max_order = db.session.query(db.func.max(Event.sort_order)).scalar() or 0
+
+    new_image_filename = None
+    if src.image_filename:
+        src_path = os.path.join(_uploads_dir(), src.image_filename)
+        if os.path.isfile(src_path):
+            ext = src.image_filename.rsplit('.', 1)[-1].lower()
+            new_image_filename = f'{uuid.uuid4().hex}.{ext}'
+            with open(src_path, 'rb') as fsrc, open(os.path.join(_uploads_dir(), new_image_filename), 'wb') as fdst:
+                fdst.write(fsrc.read())
+
+    copy = Event(
+        title_en=src.title_en, title_gu=src.title_gu,
+        desc_en=src.desc_en, desc_gu=src.desc_gu,
+        image_filename=new_image_filename,
+        sort_order=max_order + 1,
+        is_active=src.is_active,
+        expiry_date=src.expiry_date,
+    )
+    db.session.add(copy)
+    db.session.commit()
+    flash(f'Event "{copy.title_en or copy.title_gu}" copied.', 'success')
+    return redirect(url_for('admin.events'))
+
+
 @admin_bp.route('/admin/events/delete/<int:event_id>', methods=['POST'])
 @login_required
 def delete_event(event_id):

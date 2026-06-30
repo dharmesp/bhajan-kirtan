@@ -13,7 +13,7 @@
         <th style="width:5rem;">Image</th>
         <th style="width:7rem;">Expiry <small class="text-muted fw-normal">(PST)</small></th>
         <th style="width:5.5rem;">Active</th>
-        <th style="width:5rem;"></th>
+        <th style="width:7.5rem;"></th>
       </tr>
     </thead>
     <tbody>
@@ -81,6 +81,12 @@
                class="btn btn-outline-primary btn-sm" title="Full edit (image etc.)">
               <i class="bi bi-pencil"></i>
             </a>
+            <form method="post" action="{{ url_for('admin.copy_event', event_id=ev.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn btn-outline-secondary btn-sm" title="Copy event">
+                <i class="bi bi-copy"></i>
+              </button>
+            </form>
             <form method="post" action="{{ url_for('admin.delete_event', event_id=ev.id) }}"
                   onsubmit="return confirm('Delete this event?');">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
-from sqlalchemy import or_, case
+from sqlalchemy import or_, case, nullslast
 from ..models import db, Bhajan, Category, Setting, Event
 import qrcode
 
@@ -195,7 +195,7 @@ def api_events():
     ev_list = Event.query.filter(
         Event.is_active == True,
         or_(Event.expiry_date == None, Event.expiry_date >= today)
-    ).order_by(Event.sort_order, Event.id).all()
+    ).order_by(nullslast(Event.expiry_date.asc()), Event.sort_order, Event.id).all()
     return jsonify([{
         'id':          e.id,
         'title_en':    e.title_en,
