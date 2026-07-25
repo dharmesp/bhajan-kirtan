@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask import Blueprint, render_template, send_file, request, jsonify, abort, current_app
 from sqlalchemy import or_, case, nullslast
-from ..models import db, Bhajan, Category, Setting, Event
+from ..models import db, Bhajan, Category, Setting, Event, sync_active_events
 import qrcode
 
 def _today_pst():
@@ -191,6 +191,7 @@ def print_image(slot):
 
 @public_bp.route('/api/events')
 def api_events():
+    sync_active_events()
     today = _today_pst()
     ev_list = Event.query.filter(
         Event.is_active == True,

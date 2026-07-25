@@ -10,7 +10,10 @@ from flask import (
     Blueprint, render_template, redirect, url_for,
     session, request, flash, send_file, current_app, jsonify
 )
-from ..models import db, Bhajan, Category, Setting, AdminUser, SiteManager, Event
+from ..models import (
+    db, Bhajan, Category, Setting, AdminUser, SiteManager, Event,
+    sync_active_events, get_event_auto_active_limit, EVENT_AUTO_ACTIVE_LIMIT_SETTING_KEY,
+)
 import qrcode
 
 admin_bp = Blueprint('admin', __name__)
@@ -765,6 +768,7 @@ def events():
     from datetime import datetime
     from zoneinfo import ZoneInfo
     from sqlalchemy import nullslast
+    sync_active_events()
     today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
     from sqlalchemy import or_
     upcoming = Event.query.filter(
@@ -774,7 +778,24 @@ def events():
         Event.expiry_date != None,
         Event.expiry_date < today
     ).order_by(Event.expiry_date.desc()).all()
-    return render_template('admin/events.html', upcoming=upcoming, expired=expired, today=today)
+    return render_template('admin/events.html', upcoming=upcoming, expired=expired, today=today,
+                            auto_active_limit=get_event_auto_active_limit())
+
+
+@admin_bp.route('/admin/events/auto-active-limit', methods=['POST'])
+@login_required
+def set_events_auto_active_limit():
+    try:
+        limit = int(request.form.get('auto_active_limit', ''))
+        if limit < 1:
+            raise ValueError
+    except ValueError:
+        flash('Please enter a whole number of 1 or more.', 'danger')
+        return redirect(url_for('admin.events'))
+    Setting.set(EVENT_AUTO_ACTIVE_LIMIT_SETTING_KEY, str(limit))
+    sync_active_events()
+    flash(f'Now auto-activating the {limit} soonest upcoming event{"" if limit == 1 else "s"}.', 'success')
+    return redirect(url_for('admin.events'))
 
 
 @admin_bp.route('/admin/event/field/<int:event_id>', methods=['POST'])
@@ -798,11 +819,10 @@ def event_field(event_id):
         elif field == 'expiry_date':
             from datetime import date
             event.expiry_date = date.fromisoformat(value) if value else None
-        elif field == 'is_active':
-            event.is_active = bool(value)
         else:
             return jsonify({'ok': False, 'error': 'Unknown field'}), 400
         db.session.commit()
+        sync_active_events()
         return jsonify({'ok': True})
     except Exception as e:
         db.session.rollback()
@@ -821,7 +841,6 @@ def add_event():
             sort_order = int(request.form.get('sort_order', 0))
         except ValueError:
             sort_order = 0
-        is_active = request.form.get('is_active') == 'on'
         from datetime import date as _date
         expiry_raw = request.form.get('expiry_date', '').strip()
         expiry_date = _date.fromisoformat(expiry_raw) if expiry_raw else None
@@ -829,7 +848,7 @@ def add_event():
         event = Event(
             title_en=title_en, title_gu=title_gu,
             desc_en=desc_en, desc_gu=desc_gu,
-            sort_order=sort_order, is_active=is_active,
+            sort_order=sort_order,
             expiry_date=expiry_date,
         )
         db.session.add(event)
@@ -847,6 +866,7 @@ def add_event():
             event.image_filename = fname
 
         db.session.commit()
+        sync_active_events()
         flash('Event added.', 'success')
         return redirect(url_for('admin.events'))
 
@@ -866,7 +886,6 @@ def edit_event(event_id):
             event.sort_order = int(request.form.get('sort_order', 0))
         except ValueError:
             event.sort_order = 0
-        event.is_active = request.form.get('is_active') == 'on'
         from datetime import date as _date
         expiry_raw = request.form.get('expiry_date', '').strip()
         event.expiry_date = _date.fromisoformat(expiry_raw) if expiry_raw else None
@@ -898,6 +917,7 @@ def edit_event(event_id):
             event.image_filename = None
 
         db.session.commit()
+        sync_active_events()
         flash('Event updated.', 'success')
         return redirect(url_for('admin.events'))
 
@@ -925,11 +945,11 @@ def copy_event(event_id):
         desc_en=src.desc_en, desc_gu=src.desc_gu,
         image_filename=new_image_filename,
         sort_order=max_order + 1,
-        is_active=src.is_active,
         expiry_date=src.expiry_date,
     )
     db.session.add(copy)
     db.session.commit()
+    sync_active_events()
     flash(f'Event "{copy.title_en or copy.title_gu}" copied.', 'success')
     return redirect(url_for('admin.events'))
 
@@ -1003,11 +1023,11 @@ def import_events_csv():
             desc_en=(row.get('desc_en') or '').strip(),
             desc_gu=(row.get('desc_gu') or '').strip(),
             expiry_date=expiry_date, sort_order=max_order,
-            is_active=True,
         ))
         added += 1
 
     db.session.commit()
+    sync_active_events()
     parts = [f'{added} event{"" if added == 1 else "s"} added']
     if skipped:
         parts.append(f'{skipped} skipped (missing title or invalid date)')
@@ -1028,5 +1048,6 @@ def delete_event(event_id):
             pass
     db.session.delete(event)
     db.session.commit()
+    sync_active_events()
     flash('Event deleted.', 'info')
     return redirect(url_for('admin.events'))

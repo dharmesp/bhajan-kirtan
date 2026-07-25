@@ -86,11 +86,14 @@
         <div class="form-text">Auto-hides at end of this day (PST). Leave blank = no expiry.</div>
       </div>
       <div class="col-12 col-md-5 d-flex align-items-end pb-1">
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="is_active" id="chkActive"
-                 {% if event is none or event.is_active %}checked{% endif %} />
-          <label class="form-check-label" for="chkActive">Active (visible to visitors)</label>
-        </div>
+        {% if event %}
+        <span class="badge {{ 'bg-success' if event.is_active else 'bg-secondary' }}">
+          {{ 'Active' if event.is_active else 'Hidden' }}
+        </span>
+        <span class="small text-muted ms-2">set automatically on the Events page</span>
+        {% else %}
+        <span class="small text-muted">Visibility is set automatically after saving — see the Events page.</span>
+        {% endif %}
       </div>
     </div>
 

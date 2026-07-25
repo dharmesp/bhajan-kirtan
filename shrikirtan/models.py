@@ -123,6 +123,34 @@ class Event(db.Model):
         return f'<Event {self.title_en or self.title_gu}>'
 
 
+EVENT_AUTO_ACTIVE_LIMIT_DEFAULT = 10
+EVENT_AUTO_ACTIVE_LIMIT_SETTING_KEY = 'events_auto_active_limit'
+
+
+def get_event_auto_active_limit():
+    raw = Setting.get(EVENT_AUTO_ACTIVE_LIMIT_SETTING_KEY, str(EVENT_AUTO_ACTIVE_LIMIT_DEFAULT))
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return EVENT_AUTO_ACTIVE_LIMIT_DEFAULT
+
+
+def sync_active_events():
+    """Auto-activate the soonest N upcoming (unexpired) events — N from the
+    events_auto_active_limit setting — and hide the rest, so public visibility
+    tracks event dates without manual toggling."""
+    from zoneinfo import ZoneInfo
+    from sqlalchemy import or_, nullslast
+    limit = get_event_auto_active_limit()
+    today = datetime.now(ZoneInfo('America/Los_Angeles')).date()
+    upcoming = Event.query.filter(
+        or_(Event.expiry_date == None, Event.expiry_date >= today)
+    ).order_by(nullslast(Event.expiry_date.asc()), Event.sort_order, Event.id).all()
+    for i, ev in enumerate(upcoming):
+        ev.is_active = i < limit
+    db.session.commit()
+
+
 class SiteManager(db.Model):
     __tablename__ = 'site_managers'
 

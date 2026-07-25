@@ -69,10 +69,10 @@
         </td>
 
         <td>
-          <button class="btn btn-sm sk-ev-toggle-active {{ 'btn-success' if ev.is_active else 'btn-outline-secondary' }}"
-                  data-active="{{ 'true' if ev.is_active else 'false' }}" title="Toggle visibility">
+          <span class="badge {{ 'bg-success' if ev.is_active else 'bg-secondary' }}"
+                title="Set automatically — the 10 soonest upcoming events are Active">
             {{ 'Active' if ev.is_active else 'Hidden' }}
-          </button>
+          </span>
         </td>
 
         <td>
@@ -121,6 +121,22 @@
       <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i>Dashboard
       </a>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body py-2 d-flex align-items-center flex-wrap gap-2">
+      <i class="bi bi-gear text-muted"></i>
+      <span class="small text-muted">Auto-activate the soonest</span>
+      <form method="post" action="{{ url_for('admin.set_events_auto_active_limit') }}"
+            class="d-flex align-items-center gap-2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="number" name="auto_active_limit" value="{{ auto_active_limit }}"
+               min="1" max="999" class="form-control form-control-sm" style="width:5rem;" />
+        <span class="small text-muted">upcoming event{{ 's' if auto_active_limit != 1 else '' }}</span>
+        <button type="submit" class="btn btn-outline-primary btn-sm">Save</button>
+      </form>
+      <span class="small text-muted ms-auto">Recalculated whenever this page loads or a visitor loads the site — no manual toggling needed.</span>
     </div>
   </div>
 
@@ -275,23 +291,6 @@ document.querySelectorAll('.sk-ev-val').forEach(cell => {
       if (e.key === 'Escape') { this.innerHTML = prev; }
     });
     input.addEventListener('blur', save);
-  });
-});
-
-document.querySelectorAll('.sk-ev-toggle-active').forEach(btn => {
-  btn.addEventListener('click', function () {
-    const tr   = this.closest('tr');
-    const id   = tr.dataset.id;
-    const next = this.dataset.active !== 'true';
-    _post(`/admin/event/field/${id}`, { field: 'is_active', value: next })
-      .then(r => {
-        if (r.ok) {
-          this.dataset.active = next ? 'true' : 'false';
-          this.textContent    = next ? 'Active' : 'Hidden';
-          this.className      = `btn btn-sm sk-ev-toggle-active ${next ? 'btn-success' : 'btn-outline-secondary'}`;
-          flashRow(tr, true);
-        } else { flashRow(tr, false); }
-      });
   });
 });
 
