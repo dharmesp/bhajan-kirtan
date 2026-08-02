@@ -47,17 +47,17 @@
          data-id="{{ b.id }}"
          data-en="{{ b.title_english | lower }}"
          data-gu="{{ b.title_gujarati | lower }}"
-         data-cat="{{ b.category_id or '' }}">
+         data-cat-ids="{{ b.categories | map(attribute='id') | join(',') }}">
 
-      <!-- Titles + category badge (tap to view) -->
+      <!-- Titles + category badges (tap to view) -->
       <a href="{{ url_for('public.view_bhajan', slug=b.slug) }}"
          class="flex-grow-1 overflow-hidden me-2 text-decoration-none text-reset">
         <div class="gujarati-text fw-semibold text-truncate sk-row-gu-title lh-sm">{{ b.title_gujarati }}</div>
         <div class="d-flex align-items-center gap-1" style="min-width:0;">
           <span class="text-muted text-truncate sk-row-en-title">{{ b.title_english }}</span>
-          {% if b.category %}
-          <span class="badge rounded-pill text-bg-primary flex-shrink-0 sk-cat-badge">{{ b.category.name }}</span>
-          {% endif %}
+          {% for cat in b.categories %}
+          <span class="badge rounded-pill text-bg-primary flex-shrink-0 sk-cat-badge">{{ cat.name }}</span>
+          {% endfor %}
         </div>
       </a>
 
@@ -225,7 +225,7 @@ function applyFilters() {
   const q = document.getElementById('manageSearch').value.toLowerCase().trim();
   document.querySelectorAll('.manage-row').forEach(row => {
     const matchQ   = !q || row.dataset.en.includes(q) || row.dataset.gu.includes(q);
-    const matchCat = !activeCat || row.dataset.cat === activeCat;
+    const matchCat = !activeCat || row.dataset.catIds.split(',').includes(activeCat);
     row.classList.toggle('d-none', !(matchQ && matchCat));
   });
 }
